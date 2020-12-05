@@ -11,7 +11,7 @@ from pages.models import FAQ, Page, ContactMessage, Subscription, CompanyInfo, S
 
 # from pages.serializers import NewsLetterSerializer
 # from pages.tasks import send_newsletter_email_task
-# from partak.celery import debug_task
+# from asburger.celery import debug_task
 
 class RelatedSeoAdmin(GenericStackedInline):
     model=Seo

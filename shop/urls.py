@@ -2,7 +2,7 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter
 from .views import (CategoryListAPIView,
                     ProductsListAPIView,
-                    SubCategoryListAPIView,
+                    MenuItemListAPIView,
                     ProductsCategoryListAPIView,
                     ProductDetailView,
                     InvoiceDetailView,
@@ -20,5 +20,5 @@ urlpatterns = [
     path('product_detail/<int:pk>/', ProductDetailView.as_view(), name='product_detail'),
     path("discount_check/", DiscountCheck.as_view(),name="discount_check"),
     path('invoice/', InvoiceDetailView.as_view(), name='products'),
-    path('subcategories/<int:c_id>/', SubCategoryListAPIView.as_view(), name='subcategories'),
+    path('subcategories/<int:c_id>/', MenuItemListAPIView.as_view(), name='subcategories'),
 ]

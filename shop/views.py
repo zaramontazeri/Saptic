@@ -9,15 +9,15 @@ from rest_framework import viewsets, permissions, status
 # Create your views here.
 from rest_framework.views import APIView
 
-from shop.models import Category, Product, Subcategory, OrderedItem, Invoice, DiscountCode, ProductVariation, \
+from shop.models import Shop, Product, Menuitem, OrderedItem, Invoice, DiscountCode, ProductVariation, \
     PromotionalCode
 from shop.filterset import ProductListFilter, MyFilterBackend
-from shop.serializers import CategorySerializer, ProductListSerializer, SubcategorySerializer, ProductDetailSerializer, \
+from shop.serializers import CategorySerializer, ProductListSerializer, MenuitemSerializer, ProductDetailSerializer, \
     RelatedProductSerializer, DiscountCodeSerializer, PromotionalCodeSerializer
 
 
 class CategoryListAPIView(ListAPIView): #just category (without sub category
-    queryset = Category.objects.all()
+    queryset = Shop.objects.all()
     serializer_class = CategorySerializer
 
 
@@ -28,7 +28,7 @@ class ProductsCategoryListAPIView(ListAPIView):
     def get_queryset(self):
         c_id = self.kwargs['c_id']
         if c_id > 0:
-            queryset=Product.objects.filter(subcategory__category__id=self.kwargs['c_id'])
+            queryset=Product.objects.filter(menuitem__category__id=self.kwargs['c_id'])
         else :
             queryset=Product.objects.all()
         return queryset
@@ -41,18 +41,18 @@ class ProductsListAPIView(ListAPIView):
         queryset=Product.objects.all()
         return queryset
 
-class SubCategoryListAPIView(ListAPIView): #show all of subcategories of a category
-    serializer_class = SubcategorySerializer
+class MenuItemListAPIView(ListAPIView): #show all of subcategories of a category
+    serializer_class = MenuitemSerializer
     def get_queryset(self):
         c_id = self.kwargs['c_id']
         if c_id > 0:
-            queryset=Subcategory.objects.filter(category__id=c_id)
+            queryset=Menuitem.objects.filter(category__id=c_id)
         else :
-             queryset=Subcategory.objects.all()
+             queryset=Menuitem.objects.all()
         return queryset
 
 
-# class SubCategoryProductsListAPIView(ListAPIView): #after clicking on each sub category filter
+# class MenuItemProductsListAPIView(ListAPIView): #after clicking on each sub category filter
 #     pass
 
 

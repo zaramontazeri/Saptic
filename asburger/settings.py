@@ -28,7 +28,7 @@ SECRET_KEY = '=3=wmc78&b=+$=-le=so2_i29$&+2u)e=@4anm8#=dxrnm$sbv'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["panel.partakart.com", 'localhost']
+ALLOWED_HOSTS = ["panel.asburger.ir", 'localhost']
 
 
 # Application definition
@@ -75,7 +75,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'partak.urls'
+ROOT_URLCONF = 'asburger.urls'
 
 TEMPLATES = [
     {
@@ -93,7 +93,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'partak.wsgi.application'
+WSGI_APPLICATION = 'asburger.wsgi.application'
 
 
 # Database
@@ -214,8 +214,8 @@ SIMPLE_JWT = {
 
 
 AUTH_REST = {
-    'DOMAIN': 'partakart.ir',
-    'SITE_NAME': 'PartakArt',
+    'DOMAIN': 'asburger.ir',
+    'SITE_NAME': 'asburger',
     'PASSWORD_RESET_CONFIRM_URL': 'password/reset/confirm/{uid}/{token}',
     'PASSWORD_RESET_CONFIRM_ACTIVATE_URL': 'password/reset/confirm_activate/{uid}/{token}',
     'USERNAME_RESET_CONFIRM_URL': 'username/reset/confirm/{uid}/{token}',

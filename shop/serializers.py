@@ -5,18 +5,18 @@ from django.db.models.functions import Coalesce, Least
 from django.utils.datetime_safe import date, datetime
 from rest_framework import serializers
 from rest_framework.exceptions import MethodNotAllowed, ParseError, NotFound
-from shop.models import Category, Product, Subcategory, ProductVariation, ProductVariationAttribute, ProductAttribute, \
+from shop.models import Shop, Product, Menuitem, ProductVariation, ProductVariationAttribute, ProductAttribute, \
     ProductGalleryImage, ProductReview, DiscountCode, PromotionalCode
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
-        model= Category
+        model= Shop
         fields = '__all__'
 
-class SubcategorySerializer(serializers.ModelSerializer):
+class MenuitemSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Subcategory
+        model = Menuitem
         exclude = ['category']
 
 ###PRODUCT LIST

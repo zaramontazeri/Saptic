@@ -1,5 +1,5 @@
 """
-WSGI config for partak project.
+WSGI config for asburger project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'partak.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'asburger.settings')
 
 application = get_wsgi_application()

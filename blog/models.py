@@ -3,7 +3,7 @@ from django.db import models
 from ckeditor_uploader.fields import RichTextUploadingField
 from embed_video.fields import EmbedVideoField
 
-from partak import constants
+from asburger import constants
 
 from django.contrib.auth import get_user_model
 User = get_user_model()

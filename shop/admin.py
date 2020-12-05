@@ -3,8 +3,8 @@ from django.forms import ModelForm,ModelMultipleChoiceField
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from nested_inline.admin import NestedStackedInline,NestedTabularInline, NestedModelAdmin
 from shop.models import (
-    Category,
-    Subcategory,
+    Shop,
+    Menuitem,
     Product,
     ProductGalleryImage,
     ProductVariation,
@@ -20,14 +20,14 @@ from shop.models import (
 
 
 
-class SubcategoryInline(admin.TabularInline):
-    model = Subcategory
+class MenuitemInline(admin.TabularInline):
+    model = Menuitem
     prepopulated_fields = {'slug': ('title',)}
 
 
 class CategoryAdmin(admin.ModelAdmin):
     inlines = [
-        SubcategoryInline,
+        MenuitemInline,
     ]
     prepopulated_fields = {'slug': ('title',)}
 
@@ -55,8 +55,8 @@ class ProductVariationInline(NestedStackedInline):#admin.StackedInline
 
 class ProductAdmin(NestedModelAdmin):
     model = Product
-    list_display = ['title','subcategory']
-    search_fields = ['title'] # "subcategory__title","subcategory__category__title" if you want to search on subcategory and category cuz it's FK
+    list_display = ['title','menuitem']
+    search_fields = ['title'] # "menuitem__title","menuitem__category__title" if you want to search on menuitem and category cuz it's FK
     inlines = [
         ProductGalleryImageInline,
         ProductVariationInline,
@@ -121,7 +121,7 @@ class OccasionalDiscountAdmin(admin.ModelAdmin):
 
 
 
-admin.site.register(Category,CategoryAdmin)
+admin.site.register(Shop,CategoryAdmin)
 admin.site.register(Product,ProductAdmin)
 # admin.site.register(ProductVariationAttribute,ProductVariationAttributeAdmin)
 admin.site.register(ProductAttribute)

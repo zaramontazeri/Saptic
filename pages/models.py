@@ -4,7 +4,7 @@ from django.db import models
 from ckeditor_uploader.fields import RichTextUploadingField
 
 from blog.models import BlogPost, Tag
-from partak import constants
+from asburger import constants
 # from tours.models import Tour
 
 

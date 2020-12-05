@@ -7,7 +7,7 @@ from django.utils.datetime_safe import date,datetime
 from rest_framework_filters.backends import RestFrameworkFilterBackend
 # from tours.models import Tour, TourCategory, City, TourVariation, Currency, TourGuide, TourGalleryImage, TourTime
 # from tours.utils import convert, deconvert
-from shop.models import Subcategory,Product
+from shop.models import Menuitem,Product
 
 #
 class ProductOrderingFilter(filters.OrderingFilter):
@@ -90,9 +90,9 @@ class MyFilterBackend(RestFrameworkFilterBackend):
 
         return kwargs
 
-class SubCategoryFilter(filters.FilterSet):
+class MenuItemFilter(filters.FilterSet):
     class Meta:
-        model = Subcategory
+        model = Menuitem
         fields = {
             'title': ['exact', 'in', 'startswith'],
             'id': [ 'in'],
@@ -145,7 +145,7 @@ class SubCategoryFilter(filters.FilterSet):
 #
 #
 class ProductListFilter(filters.FilterSet):
-    subcategory = filters.RelatedFilter(SubCategoryFilter, field_name='subcategory', queryset=Subcategory.objects.all())
+    menuitem = filters.RelatedFilter(MenuItemFilter, field_name='menuitem', queryset=Menuitem.objects.all())
 #     city = filters.RelatedFilter(CityFilter, field_name='city', queryset=City.objects.all())
 #     # variations = filters.RelatedFilter(VariationFilter, queryset=TourVariation.objects.all())
 #     guide = filters.RelatedFilter(TourGuideFilter,field_name="guide_languages", queryset=TourGuide.objects.all())
