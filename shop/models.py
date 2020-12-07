@@ -5,7 +5,7 @@ from django.utils.html import format_html
 from django.conf import settings
 from decimal import Decimal
 from django.utils.translation import ugettext_lazy as _
-
+from domains.models import Domain
 
 #todo IMPORTANT: REMEMBER THAT THIS APP IS JUST IN PERSION
 
@@ -21,6 +21,28 @@ class Shop(models.Model):
     slug = models.SlugField(allow_unicode=True)
     cover = models.ImageField(
         upload_to='covers/shop/category', blank=True, null=True) #todo doesnt it better to not be null true
+
+    phone_number = models.CharField(verbose_name=_("phone number"),max_length=20)
+    full_address=models.TextField(verbose_name=_("full address"))
+    hours = models.CharField(verbose_name=_("hours"),max_length=150)
+    description=models.TextField(verbose_name=_("description"),null=True,blank=True)
+    order = models.IntegerField(verbose_name=_("order"),unique=True)
+    domain = models.ForeignKey(Domain,verbose_name=_("domain"),on_delete=models.CASCADE , related_name='branch')
+    enable = models.BooleanField(verbose_name=_("enable"),default=True)
+    class Meta:
+        ordering = ('-order',)
+        verbose_name = _('Restaurant Branch')
+        verbose_name_plural = _('Restaurant Branchs')
+
+    def __str__(self):
+        return  self.title
+
+    # def get_absolute_url(self):
+    #     return reverse('burger:burger_menu', args=(self.pk,))
+
+
+    # def get_update_url(self):
+    #     return reverse('burger_restaurantbranch_update', args=(self.pk,))
 
     class Meta:
         verbose_name = 'Shop Shop'
@@ -316,3 +338,26 @@ class PromotionalCode(models.Model):
     disable =  models.BooleanField(default=False)
 
     # strategy = models.ForeignKey(PromotionCodeStrategy,on_delete=models.DO_NOTHING,null=True)
+
+        
+
+class WorkingTime(models.Model):
+    DATE_CHOICES = (
+        ('1','shanbe'),
+        ('2','yekshanbe'),
+        ('3','doshanbe'),
+        ('4','seshanbe'),
+        ('5','charshanbe'),
+        ('6','pangshanbe'),
+        ('7','jome'),
+    )
+    day = models.CharField(verbose_name=_("day"),max_length=1,choices=DATE_CHOICES)
+    hours = models.CharField(verbose_name=_("hours"),max_length=150)
+    branch = models.ForeignKey(Shop,verbose_name=_("branch"),related_name="time", on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = _('Working Time')
+        verbose_name_plural = _('Working Times')
+
+    def __str__(self):
+        return  str(self.branch.id)+"_"+self.day

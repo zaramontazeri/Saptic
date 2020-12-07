@@ -61,7 +61,7 @@ INSTALLED_APPS = [
     'catalog',
     'shop',
     'corsheaders',
-
+    'domains'
 ]
 
 MIDDLEWARE = [
