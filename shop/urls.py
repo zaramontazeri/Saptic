@@ -5,7 +5,7 @@ from .views import (CategoryListAPIView,
                     MenuItemListAPIView,
                     ProductsCategoryListAPIView,
                     ProductDetailView,
-                    InvoiceDetailView,
+                    InvoiceView,
                     DiscountCheck)
 # OrderedItemViewSet
 

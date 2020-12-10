@@ -15,6 +15,7 @@ from shop.models import (
     Transactions,
     Invoice,
     DiscountCode,
+    WorkingTime,
     OccasionalDiscount)
 # Register your models here.
 
@@ -24,10 +25,13 @@ class MenuitemInline(admin.TabularInline):
     model = Menuitem
     prepopulated_fields = {'slug': ('title',)}
 
+class WorkingTimeInline(admin.TabularInline):
+    model = WorkingTime
 
-class CategoryAdmin(admin.ModelAdmin):
+class ShopAdmin(admin.ModelAdmin):
     inlines = [
         MenuitemInline,
+        WorkingTimeInline
     ]
     prepopulated_fields = {'slug': ('title',)}
 
@@ -121,7 +125,7 @@ class OccasionalDiscountAdmin(admin.ModelAdmin):
 
 
 
-admin.site.register(Shop,CategoryAdmin)
+admin.site.register(Shop,ShopAdmin)
 admin.site.register(Product,ProductAdmin)
 # admin.site.register(ProductVariationAttribute,ProductVariationAttributeAdmin)
 admin.site.register(ProductAttribute)

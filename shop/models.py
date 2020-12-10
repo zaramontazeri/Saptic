@@ -52,7 +52,7 @@ class Shop(models.Model):
 
 class Seller(models.Model):
     seller = models.ForeignKey(settings.AUTH_USER_MODEL,null=True,blank=True,on_delete=models.SET_NULL)
-    shop = models.ForeignKey(Shop,on_delete=models.SET_NULL)
+    shop = models.ForeignKey(Shop,null=True,blank=True,on_delete=models.SET_NULL)
 
 class Menuitem(models.Model):
     title = models.CharField(max_length=64)
@@ -373,7 +373,7 @@ class WorkingTime(models.Model):
 
 class Gateway(models.Model):
     gatewayCode = models.CharField(verbose_name=_("gateway code"),max_length=100)
-    branch = models.ForeignKey(RestaurantBranch,verbose_name=_("branch"),on_delete=models.CASCADE,related_name="gateways",unique=True)
+    branch = models.ForeignKey(Shop,verbose_name=_("branch"),on_delete=models.CASCADE,related_name="gateways",unique=True)
 
     class Meta:
         ordering = ('-pk',)

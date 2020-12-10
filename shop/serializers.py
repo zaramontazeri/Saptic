@@ -6,7 +6,7 @@ from django.utils.datetime_safe import date, datetime
 from rest_framework import serializers
 from rest_framework.exceptions import MethodNotAllowed, ParseError, NotFound
 from shop.models import Shop, Product, Menuitem, ProductVariation, ProductVariationAttribute, ProductAttribute, \
-    ProductGalleryImage, ProductReview, DiscountCode, PromotionalCode,WorkingTime
+    ProductGalleryImage, ProductReview, DiscountCode, PromotionalCode,WorkingTime,OrderedItem,Transactions,Invoice
 
 
 class WorkingTimeSerilizer(serializers.ModelSerializer):
@@ -15,7 +15,7 @@ class WorkingTimeSerilizer(serializers.ModelSerializer):
         fields = '__all__'
 
 class CategorySerializer(serializers.ModelSerializer):
-    working_times=WorkingTimeSerilizer()
+    working_times=WorkingTimeSerilizer(many=True)
     class Meta:
         model= Shop
         fields = '__all__'
@@ -222,7 +222,7 @@ class PromotionalCodeSerializer(serializers.ModelSerializer):
 
 class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
-        model = OrderItem
+        model = OrderedItem
         fields = "__all__"
         read_only_fields = ('unit_base_price','unit_discount_price')
 
