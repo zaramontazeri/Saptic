@@ -13,7 +13,7 @@ from shop.models import Shop, Product, Menuitem, OrderedItem, Invoice, DiscountC
     PromotionalCode
 from shop.filterset import ProductListFilter, MyFilterBackend
 from shop.serializers import CategorySerializer, ProductListSerializer, MenuitemSerializer, ProductDetailSerializer, \
-    RelatedProductSerializer, DiscountCodeSerializer, PromotionalCodeSerializer
+    RelatedProductSerializer, DiscountCodeSerializer, PromotionalCodeSerializer,InvoiceSerializer
 
 
 class CategoryListAPIView(ListAPIView): #just category (without sub category
@@ -190,14 +190,31 @@ class DiscountCheck(APIView):
 
 
 
-class InvoiceDetailView(ListCreateAPIView):
+class InvoiceView(ListCreateAPIView):
     model = Invoice
     #serializer
 
     def create(self, request, *args, **kwargs):
         # basket = request.DATA["POST"].get('basket') It's how django itself works
-        basket = request.data.get("basket") #it's django restframework way of doing exactly the above line
-
+        code = request.data.get("code")
+        basket = request.data.get("basket", None)
+        address = request.data.get("address",None)
+        context = {
+            "basket":basket,
+            "request": request,
+            'address':address,
+        }
+        try:
+            discount = DiscountCode.objects.get(code=code)
+            context["discount"] = discount
+        except DiscountCode.DoesNotExist:
+                try:
+                    discount = PromotionalCode.objects.get(code=code,user=request.user)
+                    context["discount"] = discount
+                except PromotionalCode.DoesNotExist:
+                    return  Response({"error_code":"4041","error":"discount  not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        invoice = InvoiceSerializer(context=context)
 
 
 #

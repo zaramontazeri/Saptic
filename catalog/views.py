@@ -23,6 +23,11 @@ class LayoutCatalogListAPIView(ListAPIView):
     def get_queryset(self):
         return LayoutCatalog.objects.filter(page=self.kwargs.get("page"))
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["request"] = self.request
+        return context
+    
     serializer_class = LayoutCatalogSerializer
 
 

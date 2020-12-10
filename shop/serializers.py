@@ -6,10 +6,16 @@ from django.utils.datetime_safe import date, datetime
 from rest_framework import serializers
 from rest_framework.exceptions import MethodNotAllowed, ParseError, NotFound
 from shop.models import Shop, Product, Menuitem, ProductVariation, ProductVariationAttribute, ProductAttribute, \
-    ProductGalleryImage, ProductReview, DiscountCode, PromotionalCode
+    ProductGalleryImage, ProductReview, DiscountCode, PromotionalCode,WorkingTime
 
+
+class WorkingTimeSerilizer(serializers.ModelSerializer):
+    class Meta:
+        model= WorkingTime
+        fields = '__all__'
 
 class CategorySerializer(serializers.ModelSerializer):
+    working_times=WorkingTimeSerilizer()
     class Meta:
         model= Shop
         fields = '__all__'
@@ -108,10 +114,10 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
 
 ########################
-class DiscountCodeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DiscountCode
-        fields="__all__" #todo CHANGE
+# class DiscountCodeSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = DiscountCode
+#         fields="__all__" #todo CHANGE
 
 
 
@@ -212,3 +218,111 @@ class PromotionalCodeSerializer(serializers.ModelSerializer):
         else:
             raise ParseError(detail={"error": "discount is zero", "error_code": "4001"})
         return decimal.Decimal("{:.2f}".format(tour_price))
+
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderItem
+        fields = "__all__"
+        read_only_fields = ('unit_base_price','unit_discount_price')
+
+    # def get_food_item_info(self,obj):
+    #     var_serializer = VariationPriceSerializer(obj.product_variation_item)
+    #     # customer_serializer.is_valid()
+    #     res = var_serializer.data
+    #     return res
+
+class TransactionsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Transactions
+        fields = (
+            'pk',
+            'refId',
+            'bankRefId',
+            'status',
+        )
+
+
+class InvoiceSerializer(serializers.ModelSerializer):
+    orders= OrderItemSerializer(many=True)
+    customer_info = serializers.SerializerMethodField()
+    # transaction =TransactionsSerializer()
+
+    class Meta:
+        model =Invoice
+        fields = (
+            'pk',
+            'status',
+            'seller',
+            'customer',
+            'orders',
+            'total_price',
+            # 'customer_info',
+            'address',
+            'sell_source',
+            'inplace_deliver'
+             # 'transaction'
+        )
+        read_only_fields = ('status','sell_source')
+    # def get_customer_info(self,obj):
+    #     customer_id=obj.customer
+    #     # customer = Customer.objects.get(pk=customer_id)
+    #     customer_serializer = CustomerSerializer(obj.customer)
+    #     # customer_serializer.is_valid()
+    #     res = customer_serializer.data
+    #     return res
+    def create(self,validated_data):
+        # food_items = validated_data.pop('orders')
+        # try:
+        #     address = validated_data.pop("address")
+        # except:
+        #     customer = validated_data.get("customer")
+        #     address = customer.address
+        # status = "draft"
+        # source = "site"
+        # total_price = 0
+        # print (food_items)
+        # invoice = Invoice.objects.create(status=status,address=address ,sell_source=source, total_price=0,description="",**validated_data)
+
+        # for item in food_items:
+        #     food_item =item.pop("food_item")
+        #     orderd_item_unit_price = food_item.price
+        #     total_price = total_price + orderd_item_unit_price * item.get("qty")
+        #     order_item = OrderItem.objects.create(orderd_item_unit_price=orderd_item_unit_price,food_item=food_item,
+        #                            invoice=invoice  ,**item)
+        request = self.context.get("request")
+        basket = self.context.get("basket")
+        address = request.data.get("address",None)
+
+        today = date.today()
+        discount = 0
+        max_discount_value = 0
+        if bool(request.user and request.user.is_authenticated):
+            if  today < obj.expire_at: #todo inventory? (obj.inventory > 0 and) come back and discuss it after INVOICE
+                discount = obj.percentage
+                max_discount_value = obj.maximum_value
+            else:
+                raise ParseError(detail={"error": "discount is expired", "error_code": "4006"})
+
+        populate_items_price=0
+        for item in basket:
+            try:
+                variation_object = ProductVariation.objects.get(id=item["var_id"])
+                effective_price = variation_object.discount_price if variation_object.discount_price else variation_object.price
+                populate_items_price+= item["qty"] * float(effective_price) #todo check for outcome
+            except:
+                ParseError(detail={"error": "product not found", "error_code": "4007"})
+
+
+        if discount != 0:
+            if (float(populate_items_price) < float(max_discount_value)):
+                tour_price =round (float(populate_items_price) - (float(populate_items_price) * float(discount) / 100.0))
+            else:
+                tour_price =round(float(populate_items_price) - (float(max_discount_value) * float(discount) / 100.0))
+        else:
+            raise ParseError(detail={"error": "discount is zero", "error_code": "4001"})
+        return decimal.Decimal("{:.2f}".format(tour_price))
+        invoice.total_price=total_price
+        invoice.save()
+        return invoice

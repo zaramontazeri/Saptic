@@ -21,7 +21,6 @@ class Shop(models.Model):
     slug = models.SlugField(allow_unicode=True)
     cover = models.ImageField(
         upload_to='covers/shop/category', blank=True, null=True) #todo doesnt it better to not be null true
-
     phone_number = models.CharField(verbose_name=_("phone number"),max_length=20)
     full_address=models.TextField(verbose_name=_("full address"))
     hours = models.CharField(verbose_name=_("hours"),max_length=150)
@@ -50,6 +49,10 @@ class Shop(models.Model):
 
     def __str__(self):
         return self.title
+
+class Seller(models.Model):
+    seller = models.ForeignKey(settings.AUTH_USER_MODEL,null=True,blank=True,on_delete=models.SET_NULL)
+    shop = models.ForeignKey(Shop,on_delete=models.SET_NULL)
 
 class Menuitem(models.Model):
     title = models.CharField(max_length=64)
@@ -163,6 +166,8 @@ class Invoice(models.Model):
     CONFIRMED='co'
     DELIVERED='de'
 
+    SITE = 'si'
+    INPLACE ='in'
     ORDER_STATUS_CHOICES = (
         (DRAFT, 'Draft'),
         (PAYED,'Payed'),
@@ -174,13 +179,16 @@ class Invoice(models.Model):
         (CONFIRMED, 'Confirmed'),
         (DELIVERED, 'Delivered'),
     )
-
+    SELL_SOURCE = (
+        (SITE, 'site'),
+        (INPLACE, 'inplace'),
+    )
     order_status=models.CharField(verbose_name=_("pay_status"),max_length=4,choices=ORDER_STATUS_CHOICES,default=DRAFT)
     deliver_status = models.CharField(verbose_name=_("deliver_status"), max_length=4, choices=DELIVER_STATUS_CHOICES, default=PENDING)
     #TODO shange shipping_number into u_id (ask erfan)
     shipping_number=models.CharField(max_length=24,null=True,blank=True) #POSTAL TRACKING CODE
-
-    # seller = models.ForeignKey(Seller,verbose_name=_("seller"), on_delete=models.SET_NULL, null=True) #from seller you can also undrestand which restaurant it is
+    sell_source = models.CharField(verbose_name=_("sell_source"), max_length=4, choices=SELL_SOURCE, default=SITE)
+    seller = models.ForeignKey(Seller,verbose_name=_("seller"), on_delete=models.SET_NULL, null=True) #from seller you can also undrestand which restaurant it is
     customer = models.ForeignKey(settings.AUTH_USER_MODEL,verbose_name=_("customer"), null=True,blank=True, on_delete=models.SET_NULL)
     # u can search usage of through in here:https://docs.djangoproject.com/en/2.2/topics/db/models/
     product_items = models.ManyToManyField(ProductVariation,verbose_name=_("product items"), through="OrderedItem")  #
@@ -352,8 +360,9 @@ class WorkingTime(models.Model):
         ('7','jome'),
     )
     day = models.CharField(verbose_name=_("day"),max_length=1,choices=DATE_CHOICES)
-    hours = models.CharField(verbose_name=_("hours"),max_length=150)
-    branch = models.ForeignKey(Shop,verbose_name=_("branch"),related_name="time", on_delete=models.CASCADE)
+    from_time = models.CharField(verbose_name=_("from_times"),max_length=150)
+    to_time = models.CharField(verbose_name=_("to_times"),max_length=150)
+    branch = models.ForeignKey(Shop,verbose_name=_("branch"),related_name="working_times", on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = _('Working Time')
@@ -361,3 +370,22 @@ class WorkingTime(models.Model):
 
     def __str__(self):
         return  str(self.branch.id)+"_"+self.day
+
+class Gateway(models.Model):
+    gatewayCode = models.CharField(verbose_name=_("gateway code"),max_length=100)
+    branch = models.ForeignKey(RestaurantBranch,verbose_name=_("branch"),on_delete=models.CASCADE,related_name="gateways",unique=True)
+
+    class Meta:
+        ordering = ('-pk',)
+        verbose_name = _('Gateway')
+        verbose_name_plural = _('Gateways')
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse('app_name_gateway_detail', args=(self.pk,))
+
+
+    def get_update_url(self):
+        return reverse('app_name_gateway_update', args=(self.pk,))
