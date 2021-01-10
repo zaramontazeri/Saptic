@@ -28,7 +28,7 @@ SECRET_KEY = '=3=wmc78&b=+$=-le=so2_i29$&+2u)e=@4anm8#=dxrnm$sbv'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["panel.asburger.ir", 'localhost']
+ALLOWED_HOSTS = ["46.4.203.185", 'localhost']
 
 
 # Application definition
