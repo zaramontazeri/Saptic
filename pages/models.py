@@ -2,6 +2,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from ckeditor_uploader.fields import RichTextUploadingField
+from django_extensions.db import fields as extension_fields
 
 from blog.models import BlogPost, Tag
 from asburger import constants
