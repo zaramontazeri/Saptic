@@ -100,6 +100,7 @@ class PageContentView(generics.RetrieveAPIView):
     """ViewSet for the PageContent class"""
     def get_queryset(self):
         try:
+            print(self.kwargs["page_name"])
             query = models.PageContent.objects.get(page_name=self.kwargs["page_name"],section= self.kwargs["section"])
         except:
             raise NotFound(detail="content not found", code=4041)
