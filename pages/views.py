@@ -8,7 +8,7 @@ from django.views.generic.base import View
 
 from pages.models import FAQ, Page, ContactMessage, Subscription, CompanyInfo
 from pages.serializers import FaqSerializer, PageSerializer, ContactMessageSerializer, SubscriptionSerializer, \
-    CompanyInfoSerializer
+    CompanyInfoSerializer,PageContentSerializer
 
 
 class FaqList(generics.ListAPIView):
@@ -105,5 +105,5 @@ class PageContentViewSet(generics.RetrieveAPIView):
             raise NotFound(detail="content not found", code=4041)
 
     # queryset = models.PageContent.objects.all()
-    serializer_class = serializers.PageContentSerializer
+    serializer_class = PageContentSerializer
     # permission_classes = [permissions.IsAuthenticated]
