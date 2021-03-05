@@ -51,7 +51,7 @@ class CompanyInfoSerializer(serializers.ModelSerializer):
 class PageContentSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = models.PageContent
+        model = PageContent
         fields = (
             'slug', 
             'page_name', 
