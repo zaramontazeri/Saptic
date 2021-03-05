@@ -95,3 +95,15 @@ class CompanyDetail(generics.RetrieveAPIView):
 #         print (news_serializer.data)
 #         context = {'news_letter': news_serializer.data}
 #         return render(request, "email/news_letter_blog_type1.html", context=context)
+
+class PageContentViewSet(generics.RetrieveAPIView):
+    """ViewSet for the PageContent class"""
+    def get_queryset(self):
+        try:
+            query = models.PageContent.objects.get(page_name=self.kwargs["page_name"],section= self.kwargs["section"])
+        except:
+            raise NotFound(detail="content not found", code=4041)
+
+    # queryset = models.PageContent.objects.all()
+    serializer_class = serializers.PageContentSerializer
+    # permission_classes = [permissions.IsAuthenticated]

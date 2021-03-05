@@ -92,3 +92,20 @@ admin.site.register(ContactMessage, ContactMessageAdmin)
 admin.site.register(Subscription)
 # admin.site.register(CompanyInfo, LeafletGeoAdmin)
 # admin.site.register(NewsLetter, NewsLetterAdmin)
+from django.contrib import admin
+from django import forms
+from .models import PageContent
+
+class PageContentAdminForm(forms.ModelForm):
+
+    class Meta:
+        model = PageContent
+        fields = '__all__'
+
+
+class PageContentAdmin(admin.ModelAdmin):
+    form = PageContentAdminForm
+    list_display = ['page_name', 'slug', 'created', 'last_updated', 'section', 'cover', 'title', 'content', 'actions', 'content_type']
+    readonly_fields = [ 'created', 'last_updated']
+
+admin.site.register(PageContent, PageContentAdmin)
