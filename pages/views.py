@@ -9,7 +9,7 @@ from django.views.generic.base import View
 from pages.models import FAQ, Page, ContactMessage, Subscription, CompanyInfo
 from pages.serializers import FaqSerializer, PageSerializer, ContactMessageSerializer, SubscriptionSerializer, \
     CompanyInfoSerializer,PageContentSerializer
-from rest_framework.exceptions import Http404
+from rest_framework.exceptions import NotFound
 
 class FaqList(generics.ListAPIView):
     """
