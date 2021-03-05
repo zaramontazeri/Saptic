@@ -96,7 +96,7 @@ class CompanyDetail(generics.RetrieveAPIView):
 #         context = {'news_letter': news_serializer.data}
 #         return render(request, "email/news_letter_blog_type1.html", context=context)
 
-class PageContentViewSet(generics.RetrieveAPIView):
+class PageContentView(generics.RetrieveAPIView):
     """ViewSet for the PageContent class"""
     def get_queryset(self):
         try:
