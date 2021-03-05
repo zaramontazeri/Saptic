@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.views.generic.base import View
 
-from pages.models import FAQ, Page, ContactMessage, Subscription, CompanyInfo
+from pages.models import FAQ, Page, ContactMessage, Subscription, CompanyInfo,PageContent
 from pages.serializers import FaqSerializer, PageSerializer, ContactMessageSerializer, SubscriptionSerializer, \
     CompanyInfoSerializer,PageContentSerializer
 from rest_framework.exceptions import NotFound
@@ -101,7 +101,7 @@ class PageContentView(generics.RetrieveAPIView):
     def get_queryset(self):
         try:
             print(self.kwargs["page_name"])
-            query = models.PageContent.objects.filter(page_name=self.kwargs["page_name"],section= self.kwargs["section"])
+            return query = PageContent.objects.filter(page_name=self.kwargs["page_name"],section= self.kwargs["section"])
         except:
             raise NotFound(detail="content not found", code=4041)
 
