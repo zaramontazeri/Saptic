@@ -10,10 +10,11 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.views import APIView
 
 from shop.models import Shop, Product, Menuitem, OrderedItem, Invoice, DiscountCode, ProductVariation, \
-    PromotionalCode
+    PromotionalCode,Transactions
 from shop.filterset import ProductListFilter, MyFilterBackend
 from shop.serializers import CategorySerializer, ProductListSerializer, MenuitemSerializer, ProductDetailSerializer, \
-    RelatedProductSerializer, DiscountCodeSerializer, PromotionalCodeSerializer
+    RelatedProductSerializer, DiscountCodeSerializer, PromotionalCodeSerializer,InvoiceSerializer
+from services.payment import *
 
 
 class CategoryListAPIView(ListAPIView): #just category (without sub category
@@ -190,14 +191,76 @@ class DiscountCheck(APIView):
 
 
 
-class InvoiceDetailView(ListCreateAPIView):
-    model = Invoice
-    #serializer
-
+class InvoiceView(ListCreateAPIView):
+    serializer_class=InvoiceSerializer
+    def get_queryset(self):
+        return Invoice.objects.filter(customer =self.request.user)
     def create(self, request, *args, **kwargs):
         # basket = request.DATA["POST"].get('basket') It's how django itself works
-        basket = request.data.get("basket") #it's django restframework way of doing exactly the above line
+        code = request.data.get("code", None) #IMP: yek nafar nmitoone ham discount code estefade kone ham promotional code
+        context = {
+            "request": request,
+            "discount" : None,
+            "discount_type":None,
+        }
+        try:
+            discount = DiscountCode.objects.get(code=code)
+            context["discount"] = discount
+            context["discount_type"] = "discount"
+        except DiscountCode.DoesNotExist:
+                try:
+                    discount = PromotionalCode.objects.get(code=code,user=request.user)
+                    context["discount"] = discount
+                    context["discount_type"] = "promotional"
+                except PromotionalCode.DoesNotExist:
+                    # return  Response({"error_code":"4041","error":"discount  not found"}, status=status.HTTP_404_NOT_FOUND)
+                    pass
+        invoice_ser = InvoiceSerializer(data=request.data ,context=context)
+        invoice_ser.is_valid()
+        invoice = invoice_ser.save()
+        request_data ={}
+        request_data["amount"] = invoice_ser.data['total_price']
+        # request_data["description"] = invoice_ser.data.get('description'," تست ")
+        request_data["description"] = "تست"
+        status,url, authority= send_request(request ,request_data)
+        if status == "success":
+            Transaction.objects.create(invoice=invoice,
+                                        status="pending",statusNum=0,authority=authority)
+            return Response({"url":url,"status":status})
+        elif status == "failed":
+            return Response({"status":status})
 
+# class Verify(View):
+#     def get(self, request):
+#         authority = request.GET['Authority']
+#         transaction = Transactions.objects.get(authority=authority)
+#         amount = transaction.invoice.total_price
+#         status , refes = verify(request,amount)
+#         if status == "success":
+#             transaction.status="payed"
+#             transaction.refId = refes
+#             transaction.status = 0
+#             transaction.save()
+#             return render(request, status + '.html',
+#                           {
+
+#                           })
+#         elif status == "failed":
+#             transaction.status="failed"
+#             transaction.statusNum = refes
+#             transaction.save()
+#             return render(request, status + '.html',
+#                           {
+
+#                           })
+#         elif status == "cancel":
+#             transaction.status = "cancel"
+#             transaction.statusNum = refes
+#             transaction.save()
+#             return render(request, status + '.html',
+#                           {
+
+#                           })
 
 
 #
