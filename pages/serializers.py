@@ -1,7 +1,8 @@
 from rest_framework import serializers
 
 
-from pages.models import FAQ, Page, ContactMessage, Subscription, CompanyInfo
+from pages.models import FAQ, Page, ContactMessage, Subscription, CompanyInfo,PageContent
+
 
 
 
