@@ -46,3 +46,22 @@ class CompanyInfoSerializer(serializers.ModelSerializer):
         model = CompanyInfo
         geo_field = 'point'
         fields = '__all__'
+
+
+class PageContentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.PageContent
+        fields = (
+            'slug', 
+            'page_name', 
+            'created', 
+            'last_updated', 
+            'section', 
+            'cover', 
+            'title', 
+            'content', 
+            'actions', 
+            'content_type', 
+        )
+

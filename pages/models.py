@@ -177,3 +177,32 @@ class ProductSpecifications(models.Model):
     promotional_gift=models.ForeignKey(PromotionalGift,related_name="specifications",on_delete=models.CASCADE)
     class Meta(object):
         ordering = ['specification_key']
+
+
+class PageContent(models.Model):
+
+    # Fields
+    page_name = models.CharField(max_length=255)
+    slug = extension_fields.AutoSlugField(populate_from='section', blank=True)
+    created = models.DateTimeField(auto_now_add=True, editable=False)
+    last_updated = models.DateTimeField(auto_now=True, editable=False)
+    section = models.CharField(max_length=30)
+    cover = models.ImageField(upload_to="/upload/images/section_cover")
+    title = models.TextField(max_length=100)
+    content = models.TextField(max_length=200)
+    actions = models.URLField()
+    content_type = models.PositiveSmallIntegerField()
+
+
+    class Meta:
+        ordering = ('-created',)
+
+    def __unicode__(self):
+        return u'%s' % self.slug
+
+    def get_absolute_url(self):
+        return reverse('app_name_pagecontent_detail', args=(self.slug,))
+
+
+    def get_update_url(self):
+        return reverse('app_name_pagecontent_update', args=(self.slug,))
