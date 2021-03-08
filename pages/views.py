@@ -106,7 +106,7 @@ class PageContentView(generics.APIView):
             raise NotFound(detail="content not found", code=4041)
     def get(self, request,page_name , section, format=None):
         """
-        Return a list of all users.
+        Return a content.
         """
         query = self.get_queryset()
         serializer = self.serializer_class(data = query)
