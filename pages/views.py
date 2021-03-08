@@ -112,7 +112,7 @@ class PageContentView(APIView):
         """
         query = self.get_queryset()
         serializer = self.serializer_class(query)
-        serializer.is_valid()
+        # serializer.is_valid()
         return Response(serializer.data)
     # queryset = models.PageContent.objects.all()
     serializer_class = PageContentSerializer
