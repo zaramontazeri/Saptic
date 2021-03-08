@@ -101,7 +101,7 @@ class PageContentView(generics.RetrieveAPIView):
     def get_queryset(self):
         try:
             print(self.kwargs["page_name"])
-            return query = PageContent.objects.filter(page_name=self.kwargs["page_name"],section= self.kwargs["section"])
+            return PageContent.objects.filter(page_name=self.kwargs["page_name"],section= self.kwargs["section"])
         except:
             raise NotFound(detail="content not found", code=4041)
 
