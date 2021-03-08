@@ -7,6 +7,8 @@ from django.shortcuts import render
 from django.views.generic.base import View
 
 from pages.models import FAQ, Page, ContactMessage, Subscription, CompanyInfo,PageContent
+from rest_framework.views import APIView
+
 from pages.serializers import FaqSerializer, PageSerializer, ContactMessageSerializer, SubscriptionSerializer, \
     CompanyInfoSerializer,PageContentSerializer
 from rest_framework.exceptions import NotFound
@@ -96,7 +98,7 @@ class CompanyDetail(generics.RetrieveAPIView):
 #         context = {'news_letter': news_serializer.data}
 #         return render(request, "email/news_letter_blog_type1.html", context=context)
 
-class PageContentView(generics.APIView):
+class PageContentView(APIView):
     """ViewSet for the PageContent class"""
     def get_queryset(self):
         try:
