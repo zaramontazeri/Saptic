@@ -111,6 +111,7 @@ class PageContentView(APIView):
         Return a content.
         """
         query = self.get_queryset()
+        print(query)
         serializer = self.serializer_class(query)
         # serializer.is_valid()
         return Response(serializer.data)
