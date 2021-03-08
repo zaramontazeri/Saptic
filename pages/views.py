@@ -114,5 +114,5 @@ class PageContentView(APIView):
         serializer = self.serializer_class(data = query)
         return Response(serializer)
     # queryset = models.PageContent.objects.all()
-    serializer_class = PageContentSerializer
+    serializer_class = PageContentSerializer.data
     # permission_classes = [permissions.IsAuthenticated]
