@@ -19,6 +19,18 @@ from shop.models import (
 # Register your models here.
 
 
+
+class SubcategoryInline(admin.TabularInline):
+    model = Subcategory
+    prepopulated_fields = {'slug': ('title',)}
+
+
+class CategoryAdmin(admin.ModelAdmin):
+    inlines = [
+        SubcategoryInline,
+    ]
+    prepopulated_fields = {'slug': ('title',)}
+
 class WorkingTimeInline(admin.TabularInline):
     model = WorkingTime
 
