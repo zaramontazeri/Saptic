@@ -104,7 +104,7 @@ class Product(models.Model):
     related_products = models.ManyToManyField('self',blank=True,null=True, symmetrical=True)#, related_name='+' #if i used through it wasn't bi-directional and i had to do symmetrical=False
     video = EmbedVideoField(blank=True, null=True)
     content = RichTextUploadingField()
-    subcategory=models.ForeignKey(Subcategory,on_delete=models.PROTECT) #todo on_delete casacade? agar subcategory eshtebahi hazf she koli mahsool hazf mishan! che konim?
+    subcategory=models.ForeignKey(Subcategory,related_name="product",on_delete=models.PROTECT) #todo on_delete casacade? agar subcategory eshtebahi hazf she koli mahsool hazf mishan! che konim?
 
     #Product variations has FK to product
     def __str__(self):
