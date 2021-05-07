@@ -5,8 +5,8 @@ from django.db.models.functions import Coalesce, Least
 from django.utils.datetime_safe import date, datetime
 from rest_framework import serializers
 from rest_framework.exceptions import MethodNotAllowed, ParseError, NotFound
-from shop.models import Shop, Product, Menuitem, ProductVariation, ProductVariationAttribute, ProductAttribute, \
-    ProductGalleryImage, ProductReview, DiscountCode, PromotionalCode,WorkingTime,OrderedItem,Transactions,Invoice,TestInPlace
+from shop.models import Shop, Product, ProductVariation, ProductVariationAttribute, ProductAttribute, \
+    ProductGalleryImage, ProductReview, DiscountCode, PromotionalCode,WorkingTime,OrderedItem,Transactions,Invoice,TestInPlace,Category,Subcategory
 
 
 class VideoField(serializers.Field):
@@ -48,15 +48,23 @@ class WorkingTimeSerilizer(serializers.ModelSerializer):
             "7":"جمعه"
         }
         return days[instance.day]
-class CategorySerializer(serializers.ModelSerializer):
+
+class ShopSerializer(serializers.ModelSerializer):
     working_times=WorkingTimeSerilizer(many=True)
     class Meta:
         model= Shop
         fields = '__all__'
 
-class MenuitemSerializer(serializers.ModelSerializer):
+
+class CategorySerializer(serializers.ModelSerializer):
     class Meta:
-        model = Menuitem
+        model = Category
+        fields = '__all__'
+
+
+class SubcategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subcategory
         exclude = ['category']
 
 ###PRODUCT LIST

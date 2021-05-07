@@ -4,7 +4,6 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from nested_inline.admin import NestedStackedInline,NestedTabularInline, NestedModelAdmin
 from shop.models import (
     Shop,
-    Menuitem,
     Product,
     ProductGalleryImage,
     ProductVariation,
@@ -20,17 +19,12 @@ from shop.models import (
 # Register your models here.
 
 
-
-class MenuitemInline(admin.TabularInline):
-    model = Menuitem
-    prepopulated_fields = {'slug': ('title',)}
-
 class WorkingTimeInline(admin.TabularInline):
     model = WorkingTime
 
 class ShopAdmin(admin.ModelAdmin):
     inlines = [
-        MenuitemInline,
+        # MenuitemInline,
         WorkingTimeInline
     ]
     prepopulated_fields = {'slug': ('title',)}
@@ -59,7 +53,7 @@ class ProductVariationInline(NestedStackedInline):#admin.StackedInline
 
 class ProductAdmin(NestedModelAdmin):
     model = Product
-    list_display = ['title','menuitem']
+    list_display = ['title']
     search_fields = ['title'] # "menuitem__title","menuitem__category__title" if you want to search on menuitem and category cuz it's FK
     inlines = [
         ProductGalleryImageInline,

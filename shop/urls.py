@@ -2,12 +2,12 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter
 from .views import (CategoryListAPIView,
                     ProductsListAPIView,
-                    MenuItemListAPIView,
                     ProductsCategoryListAPIView,
                     ProductDetailView,
                     InvoiceView,
                     DiscountCheck,
-                    TestInPlaceView
+                    TestInPlaceView,
+                    SubcategoryListAPIView
                     )
 # OrderedItemViewSet
 
@@ -23,5 +23,5 @@ urlpatterns = [
     path("discount_check/", DiscountCheck.as_view(),name="discount_check"),
     path('invoice/', InvoiceView.as_view(), name='invoice'),
     path('test_in_place/', TestInPlaceView.as_view(), name='test_in_place'),
-    path('subcategories/<int:c_id>/', MenuItemListAPIView.as_view(), name='subcategories'),
+    path('subcategories/<int:c_id>/', SubcategoryListAPIView.as_view(), name='subcategories'),
 ]
