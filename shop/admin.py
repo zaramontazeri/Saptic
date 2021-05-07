@@ -15,7 +15,9 @@ from shop.models import (
     Invoice,
     DiscountCode,
     WorkingTime,
-    OccasionalDiscount)
+    OccasionalDiscount,
+    Category,
+    Subcategory)
 # Register your models here.
 
 
