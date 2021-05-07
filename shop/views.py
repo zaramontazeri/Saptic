@@ -191,7 +191,48 @@ class DiscountCheck(APIView):
 
 
 
+
 class InvoiceView(ListCreateAPIView):
+    serializer_class=InvoiceSerializer
+    def get_queryset(self):
+        return Invoice.objects.filter(customer =self.request.user)
+    def create(self, request, *args, **kwargs):
+        # basket = request.DATA["POST"].get('basket') It's how django itself works
+        code = request.data.get("code", None) #IMP: yek nafar nmitoone ham discount code estefade kone ham promotional code
+        context = {
+            "request": request,
+            "discount" : None,
+            "discount_type":None,
+        }
+        try:
+            discount = DiscountCode.objects.get(code=code)
+            context["discount"] = discount
+            context["discount_type"] = "discount"
+        except DiscountCode.DoesNotExist:
+                try:
+                    discount = PromotionalCode.objects.get(code=code,user=request.user)
+                    context["discount"] = discount
+                    context["discount_type"] = "promotional"
+                except PromotionalCode.DoesNotExist:
+                    # return  Response({"error_code":"4041","error":"discount  not found"}, status=status.HTTP_404_NOT_FOUND)
+                    pass
+        invoice_ser = InvoiceSerializer(data=request.data ,context=context)
+        invoice_ser.is_valid()
+        invoice = invoice_ser.save()
+        request_data ={}
+        request_data["amount"] = invoice_ser.data['total_price']
+        # request_data["description"] = invoice_ser.data.get('description'," تست ")
+        request_data["description"] = "تست"
+        status,url, authority= send_request(request ,request_data)
+        if status == "success":
+            Transaction.objects.create(invoice=invoice,
+                                        status="pending",statusNum=0,authority=authority)
+            return Response({"url":url,"status":status})
+        elif status == "failed":
+            return Response({"status":status})
+
+
+class TestInPlaceView(ListCreateAPIView):
     serializer_class=InvoiceSerializer
     def get_queryset(self):
         return Invoice.objects.filter(customer =self.request.user)

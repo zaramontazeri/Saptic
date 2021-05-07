@@ -6,8 +6,31 @@ from django.utils.datetime_safe import date, datetime
 from rest_framework import serializers
 from rest_framework.exceptions import MethodNotAllowed, ParseError, NotFound
 from shop.models import Shop, Product, Menuitem, ProductVariation, ProductVariationAttribute, ProductAttribute, \
-    ProductGalleryImage, ProductReview, DiscountCode, PromotionalCode,WorkingTime,OrderedItem,Transactions,Invoice
+    ProductGalleryImage, ProductReview, DiscountCode, PromotionalCode,WorkingTime,OrderedItem,Transactions,Invoice,TestInPlace
 
+
+class VideoField(serializers.Field):
+    def to_representation(self, value):
+        my_video = detect_backend(value)
+        res = {}
+        try:
+            res['info'] = my_video.get_info()
+        except :
+            pass
+        try:
+            res['code'] = my_video.get_code()
+        except :
+            pass
+        try:
+            res["url"] = my_video.get_url()
+        except :
+            pass
+        # try:
+        #     res["thumbnail"] = my_video.get_thumbnail_url()
+        # except :
+        #     pass
+
+        return res
 
 class WorkingTimeSerilizer(serializers.ModelSerializer):
     day_of_week = serializers.SerializerMethodField()
@@ -66,10 +89,11 @@ class VariationPriceSerializer(serializers.ModelSerializer):
 class ProductListSerializer(serializers.ModelSerializer):
     #todo u need to add star rating later
     variations = serializers.SerializerMethodField()
+    video = VideoField()
 
     class Meta:
         model=Product
-        fields = ['id','cover','title','variations']
+        fields = ['id','cover','title','variations','video', "content"]
         read_only_fields=["id"]
     def get_variations(self,instance):
         # today = date.today()
@@ -244,6 +268,114 @@ class OrderedItemSerializer(serializers.ModelSerializer):
 
 # class TourPaymentSerializer(serializers.ModelSerializer):
 
+class TestInPlaceSerializer(serializers.ModelSerializer):
+    orders = OrderedItemSerializer(many=True)
+    # customer_info = serializers.SerializerMethodField()
+    class Meta:
+        model = TestInPlace
+        fields = (
+            'pk',
+            'shipping_number',  # todo ????
+            'deliver_status',
+            'customer',
+            'orders',
+            'date',
+            'address',
+            'description',
+            # 'transaction'
+        )
+        read_only_fields = ('deliver_status',"date",'customer',) #todo?
+
+    # def get_customer_info(self,obj):
+    #     customer_id=obj.customer
+    #     customer_serializer = CustomerSerializer(obj.customer)
+    #     res = customer_serializer.data
+    #     return res
+
+    # def create(self, validated_data):
+    #     basket = validated_data.pop('orders')
+    #     try:
+    #         address = validated_data.pop("address")
+    #     except:
+    #         pass #please add address
+    #     order_status = "draft"
+
+    #     total_price = 0
+    #     today = date.today()
+    #     discount = self.context["discount"]
+    #     max_discount_value = 0
+    #     if discount:
+    #         if today < discount.expire_at:  # and obj.inventory>0
+    #             discount = discount.percentage
+    #             max_discount_value = discount.maximum_value
+    #         else:
+    #             raise ParseError(
+    #                 detail={"error": "discount is expired", "error_code": "4006"})
+    #     else:
+    #         discount = 0
+    #     # change to for loop
+    #     populate_items_price = 0
+    #     for item in basket:
+    #         try:
+    #             # variation_object = ProductVariation.objects.get(
+    #             #     id=item["var_id"])
+                
+    #             effective_price = dict(item)['product_variation_item'].discount_price if dict(item)['product_variation_item'].price   else  dict(item)['product_variation_item'].discount_price 
+    #             # todo check for outcome
+    #             populate_items_price += (dict(item)["qty"] * float(effective_price))
+    #         except:
+    #             ParseError(
+    #                 detail={"error": "product not found", "error_code": "4007"})
+
+    #     # var = ProductVariation.objects.get(id=var_id)
+    #     # effective_price = var.discount_price if var.discount_price else var.base_price
+    #     # p = number_of_people *float(effective_price) #populate_items_price hamoon p hast
+    #     #
+
+    #     # TODO : HATMAN BA ELNAZ MATRAH KON
+    #     final_price = populate_items_price
+    #     if discount != 0:
+    #         # max_discount_value = convert(currency, max_discount_value)
+    #         if (float(populate_items_price) < float(max_discount_value) or max_discount_value == 0):
+    #             final_price = round((float(
+    #                 populate_items_price) - (float(populate_items_price) * float(discount) / 100.0)))
+    #         else:
+    #             final_price = round(float(
+    #                 populate_items_price) - (float(max_discount_value) * float(discount) / 100.0))
+    #     # else:
+    #     #     raise ParseError(
+    #     #         detail={"error": "discount is zero", "error_code": "4007"})
+        
+    #     # set config vat 
+    #     vat = 0
+    #     vtax = round(float(vat) * float(final_price) / 100.0)
+    #     final_price = round(float(
+    #                 populate_items_price) + (float(vat) * float(final_price) / 100.0))
+        
+
+    #     #shipping value 
+    #     shipping_price = 0
+    #     final_price = shipping_price +final_price
+    #     final_price = decimal.Decimal("{:.2f}".format(final_price))
+
+
+    #     invoice = Invoice(**validated_data)
+    #     invoice.total_price = final_price
+    #     invoice.customer = self.context["request"].user
+    #     invoice.deliver_status = "pe"
+    #     invoice.order_status = "dr"
+    #     invoice.address = address
+    #     invoice.shipping_price = shipping_price
+    #     invoice.vtax = vtax 
+    #     if self.context["discount_type"] == "discount":
+    #         invoice.discount_code = discount
+    #     elif  self.context["discount_type"] == "promotional":
+    #         invoice.promotional_code = discount
+        
+
+
+    #     invoice.save()
+    #     return invoice
 
 
 class InvoiceSerializer(serializers.ModelSerializer):

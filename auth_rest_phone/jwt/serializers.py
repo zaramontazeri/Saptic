@@ -4,10 +4,18 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenViewBase
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth import get_user_model
+# from rest_framework_simplejwt.compat import get_username
+# from rest_framework_simplejwt.compat import get_username_field
+# from rest_framework_simplejwt.settings import api_settings
+
+
 
 User = get_user_model()
 
-
+def get_groups(user):
+    groups = user.groups.all()
+    groups_name = [i.name for i in groups]
+    return groups_name
 
 
 class PasswordField(serializers.CharField):
@@ -72,7 +80,13 @@ class CustomTokenObtainSerializer(serializers.Serializer):
 class CustomTokenObtainPairSerializer(CustomTokenObtainSerializer):
     @classmethod
     def get_token(cls, user):
-        return RefreshToken.for_user(user)
+        token = RefreshToken.for_user(user)
+        # username = get_username(user)
+        groups = get_groups(user)
+        token["sfsdf"] ="dsfsfd"
+        token['is_superuser'] = user.is_superuser
+        token["groups"]  = groups
+        return token
 
     def validate(self, attrs):
         data = super().validate(attrs)
