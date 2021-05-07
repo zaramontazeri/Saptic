@@ -6,7 +6,9 @@ from .views import (CategoryListAPIView,
                     ProductsCategoryListAPIView,
                     ProductDetailView,
                     InvoiceView,
-                    DiscountCheck)
+                    DiscountCheck,
+                    TestInPlaceView
+                    )
 # OrderedItemViewSet
 
 # router = DefaultRouter()
@@ -19,6 +21,7 @@ urlpatterns = [
     path('products/', ProductsListAPIView.as_view(), name='products'),
     path('product_detail/<int:pk>/', ProductDetailView.as_view(), name='product_detail'),
     path("discount_check/", DiscountCheck.as_view(),name="discount_check"),
-    path('invoice/', InvoiceView.as_view(), name='products'),
+    path('invoice/', InvoiceView.as_view(), name='invoice'),
+    path('test_in_place/', TestInPlaceView.as_view(), name='test_in_place'),
     path('subcategories/<int:c_id>/', MenuItemListAPIView.as_view(), name='subcategories'),
 ]

@@ -186,6 +186,8 @@ JWT_AUTH = {
     'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=3600),
     'JWT_ALLOW_REFRESH': True,
     'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=7),
+    'JWT_PAYLOAD_HANDLER':
+        'auth_rest_phone.custom_jwt_payload.jwt_payload_handler',
 }
 
 
@@ -195,7 +197,8 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': datetime.timedelta(days=60),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
-
+    'JWT_PAYLOAD_HANDLER':
+        'auth_rest_phone.custom_jwt_payload.jwt_payload_handler',
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
     'VERIFYING_KEY': None,

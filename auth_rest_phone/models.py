@@ -52,6 +52,11 @@ from django.core.validators import EmailValidator
 from django.core.validators import RegexValidator
 from django.utils.safestring import mark_safe
 from django.conf import settings
+from django.contrib.auth.models import Group
+
+
+if not Group.objects.filter(name__exact="shop_manager").exists():
+    Group.objects.create(name="shop_manager")
 
 class UserManager(BaseUserManager):
     """

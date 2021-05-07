@@ -6,6 +6,8 @@ from django.conf import settings
 from decimal import Decimal
 from django.utils.translation import ugettext_lazy as _
 from domains.models import Domain
+from embed_video.fields import EmbedVideoField
+from ckeditor_uploader.fields import RichTextUploadingField
 
 #todo IMPORTANT: REMEMBER THAT THIS APP IS JUST IN PERSION
 
@@ -28,6 +30,7 @@ class Shop(models.Model):
     order = models.IntegerField(verbose_name=_("order"),unique=True)
     domain = models.ForeignKey(Domain,verbose_name=_("domain"),on_delete=models.CASCADE , related_name='branch')
     enable = models.BooleanField(verbose_name=_("enable"),default=True)
+    owner = models.ManyToManyField("auth_rest_phone.UserProfile")
     class Meta:
         ordering = ('-order',)
         verbose_name = _('Restaurant Branch')
@@ -62,6 +65,7 @@ class Menuitem(models.Model):
         return self.category.title+"__"+self.title
 
 
+
 # class MenuitemSpecifications(models.Model):
 #     specification_key = models.CharField(max_length=128)
 #     specification_value = models.CharField(max_length=128)
@@ -83,6 +87,9 @@ class Product(models.Model):
     description=models.TextField()
     #Review HAS FK TO PRODUCT
     related_products = models.ManyToManyField('self',blank=True,null=True, symmetrical=True)#, related_name='+' #if i used through it wasn't bi-directional and i had to do symmetrical=False
+    video = EmbedVideoField(blank=True, null=True)
+    content = RichTextUploadingField()
+
     #Product variations has FK to product
     def __str__(self):
         return self.title
@@ -91,7 +98,7 @@ class Product(models.Model):
 class ProductGalleryImage(models.Model):
     product=models.ForeignKey(Product,related_name="product_images",on_delete=models.CASCADE)
     caption = models.CharField(max_length=128)
-    image = models.ImageField(upload_to='tours/gallery')
+    image = models.ImageField(upload_to='product/gallery')
     order = models.PositiveIntegerField(default=0, blank=False, null=False)
     def image_tag(self):
         if self.image:
@@ -111,7 +118,6 @@ class ProductAttribute(models.Model):
         return self.title
 
 class ProductVariation(models.Model):
-
     title_size=models.CharField(max_length=100)
     product=models.ForeignKey(Product,on_delete=models.CASCADE,related_name="variations")
     specifications = models.ManyToManyField(ProductAttribute, blank=True, through='ProductVariationAttribute',related_name='specifications_to_person')
@@ -121,13 +127,8 @@ class ProductVariation(models.Model):
     discount_price =models.DecimalField(max_digits=10, decimal_places=0,null=True,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at=models.DateTimeField(auto_now=True)
-    # @property
-    # def discount_price(self):
-    #     discount = int(self.price)
-    #     if self.occasional_discount:
-    #         percentage=self.occasional_discount.percentage
-    #         discount = int(float(self.price) - round((float(percentage) / 100.0) * float(self.base_price)))
-    #     return discount
+    test_in_place = models.BooleanField(default =False)
+    shops = models.ManyToManyField(Shop , blank=True , through = "ProductVariationShop",related_name="shop_variation")
 
     def __str__(self):
         return self.product.title + " __ " +self.title_size
@@ -138,14 +139,21 @@ class ProductVariationAttribute(models.Model):
     attribute=models.ForeignKey(ProductAttribute,on_delete=models.PROTECT) #agar attribute ro bekhaym pak konim injoori mifahmim ke oon attribute baraye baghie estefade shode
     attribute_value=models.CharField(max_length=150)
 
+class ProductVariationShop(models.Model):
+    shop = models.ForeignKey(Shop,on_delete=models.CASCADE ,related_name="shop")
+    variation = models.ForeignKey(ProductVariation,on_delete=models.CASCADE ,related_name = "variation")
+    code = models.CharField(max_length=150)
+    count = models.IntegerField()
 #todo rating is connected to reviews??????
+
+
 class ProductReview(models.Model):
     product=models.ForeignKey(Product,related_name="product_reviews",on_delete=models.CASCADE)
     #todo USER ro moshakhas kon bepors ke daghighan modele user chejoorie ke fk be oon chejoori bashe
     user = models.ForeignKey(settings.AUTH_USER_MODEL,null=True,blank=True,on_delete=models.SET_NULL)
     comment=models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    #todo? rate = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(5)], default=0)
+    rate = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(5)], default=0)
     confirmed=models.BooleanField(default=False)
     #todo write afte cheking USER: def __str__(self):
     #     return "User: {username} | Tour: {id}".format(username=self.user.username, id=self.tour.id)
@@ -212,13 +220,41 @@ class Invoice(models.Model):
     def __str__(self):
         return str(self.id)+"_"+self.customer.user.username
 
-    # def get_absolute_url(self):
-    #     return reverse('app_name_invoice_detail', args=(self.pk,))
-    #
-    #
-    # def get_update_url(self):
-    #     return reverse('app_name_invoice_update', args=(self.pk,))
-
+class TestInPlace(models.Model):
+    #list of status choices :paid _ unsuccessful paiment-> in transactions. deliverd
+    DRAFT='dr'
+    # PAYED='pa'
+    PENDING='pe'
+    CONFIRMED='co'
+    DELIVERED='de'
+    SITE = 'si'
+    INPLACE ='in'
+    DELIVER_STATUS_CHOICES = (
+        (PENDING, 'Pending'),
+        (CONFIRMED, 'Confirmed'),
+        (DELIVERED, 'Delivered'),
+    )
+    SELL_SOURCE = (
+        (SITE, 'site'),
+        (INPLACE, 'inplace'),
+    )
+    deliver_status = models.CharField(verbose_name=_("deliver_status"), max_length=4, choices=DELIVER_STATUS_CHOICES, default=PENDING)
+    shipping_number=models.CharField(max_length=24,null=True,blank=True) #POSTAL TRACKING CODE
+    sell_source = models.CharField(verbose_name=_("sell_source"), max_length=4, choices=SELL_SOURCE, default=SITE)
+    seller = models.ForeignKey(Seller,verbose_name=_("seller"), on_delete=models.SET_NULL, null=True) #from seller you can also undrestand which restaurant it is
+    customer = models.ForeignKey(settings.AUTH_USER_MODEL,verbose_name=_("customer"), null=True,blank=True, on_delete=models.SET_NULL)
+    product_items = models.ManyToManyField(ProductVariation,verbose_name=_("product items"), through="OrderedTestItem")  #
+    description=models.CharField(verbose_name=_("description"),max_length=200 , null=True, blank=True)
+    date=models.DateTimeField(verbose_name=_("date"),auto_now_add=True ,null=True) #todo how to make this automatic and JALALI
+    address = models.ForeignKey("users.Address",on_delete=models.PROTECT,default="-1") #if a user has address in inovice I dont let the user to delete
+    shipping_price =models.DecimalField(verbose_name=_("shipping price"),default=Decimal('0.00'),max_digits=19, decimal_places=0,null=True,blank=True) 
+    class Meta:
+        ordering = ('-pk',)
+        verbose_name = _('Invoice')
+        verbose_name_plural = _('Invoices')
+    def __str__(self):
+        return str(self.id)+"_"+self.customer.user.username
+        
 class OrderedItem(models.Model):
     product_variation_item=models.ForeignKey(ProductVariation,verbose_name=_("product item"),null=True,blank=True, on_delete=models.SET_NULL,related_name="products") #,related_query_name="products"
     invoice=models.ForeignKey(Invoice,verbose_name=_("invoice"),on_delete=models.SET_NULL, null=True,related_name="orders")
@@ -228,6 +264,26 @@ class OrderedItem(models.Model):
     #IMP: I  use unit price so your previous invoices won't be incorrect after you changed a food's price.
     unit_base_price=models.DecimalField(verbose_name=_("unit base price"),max_digits=19, decimal_places=0) #ino az roye gheymat e product variation mirizi tooye in todo: where?
     unit_discount_price = models.DecimalField(verbose_name=_("unit discount price"),null=True,blank=True, max_digits=19, decimal_places=0)
+    # todo #decimal 2 or 3?
+
+
+    class Meta:
+        ordering = ('-pk',)
+        verbose_name = _('Ordered Item')
+        verbose_name_plural = _('Ordered Items')
+
+    def __str__(self):
+        return str(self.id)+"_"+self.product_variation_item.product.title+"_"+self.product_variation_item.title_size #todo name or first+last name  +"_"+self.invoice.costumer.name
+
+class OrderedTestItem(models.Model):
+    product_variation_item=models.ForeignKey(ProductVariation,verbose_name=_("product item"),null=True,blank=True, on_delete=models.SET_NULL,related_name="products_test") #,related_query_name="products"
+    test_in_place=models.ForeignKey(TestInPlace,verbose_name=_("invoice"),on_delete=models.SET_NULL, null=True,related_name="orders")
+    #todo what about on_delete???
+
+    qty = models.IntegerField(verbose_name=_("quantity"),null=True)
+    #IMP: I  use unit price so your previous invoices won't be incorrect after you changed a food's price.
+    # unit_base_price=models.DecimalField(verbose_name=_("unit base price"),max_digits=19, decimal_places=0) #ino az roye gheymat e product variation mirizi tooye in todo: where?
+    # unit_discount_price = models.DecimalField(verbose_name=_("unit discount price"),null=True,blank=True, max_digits=19, decimal_places=0)
     # todo #decimal 2 or 3?
 
 
@@ -391,3 +447,14 @@ class Gateway(models.Model):
 
     def get_update_url(self):
         return reverse('app_name_gateway_update', args=(self.pk,))
+
+class Wallet(models.Model):
+    title = models.CharField(max_length=64)
+    products = models.ManyToManyField("Product", blank=True,related_name='wallet_to_product')
+    users = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, through='UserWallet',related_name='wallet_to_user')
+    cover = models.ImageField(upload_to='covers/wallet', blank=True, null=True)
+
+class UserWallet(models.Model):
+    wallet=models.ForeignKey(Wallet,on_delete=models.PROTECT) #agar khode product nabashe. vojood attribute bi manie
+    user=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT) #agar attribute ro bekhaym pak konim injoori mifahmim ke oon attribute baraye baghie estefade shode
+    value =models.IntegerField()
