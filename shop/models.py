@@ -57,13 +57,29 @@ class Seller(models.Model):
     seller = models.ForeignKey(settings.AUTH_USER_MODEL,null=True,blank=True,on_delete=models.SET_NULL)
     shop = models.ForeignKey(Shop,null=True,blank=True,on_delete=models.SET_NULL)
 
-class Menuitem(models.Model):
+
+
+class Category(models.Model):
     title = models.CharField(max_length=64)
     slug = models.SlugField(allow_unicode=True)
-    category=models.ForeignKey(Shop,related_name="sub_category",on_delete=models.PROTECT)
+    cover = models.ImageField(
+        upload_to='covers/shop/category', blank=True, null=True) #todo doesnt it better to not be null true
+
+    class Meta:
+        verbose_name = 'Shop Category'
+        verbose_name_plural = 'Shop Categories'
+
+    def __str__(self):
+        return self.title
+
+class Subcategory(models.Model):
+    title = models.CharField(max_length=64)
+    slug = models.SlugField(allow_unicode=True)
+    category=models.ForeignKey(Category,related_name="sub_category",on_delete=models.PROTECT)
     def __str__(self):
         return self.category.title+"__"+self.title
-
+    class Meta:
+        ordering=["category__title","title"]
 
 
 # class MenuitemSpecifications(models.Model):
@@ -82,13 +98,13 @@ class Product(models.Model):
     cover = models.ImageField(
         upload_to='covers/shop/product', blank=True, null=True)
     title=models.CharField(max_length=200)
-    menuitem=models.ForeignKey(Menuitem,on_delete=models.PROTECT) #todo on_delete casacade? agar menuitem eshtebahi hazf she koli mahsool hazf mishan! che konim?
     #GALLERY HAS FK TO PRODUCT
     description=models.TextField()
     #Review HAS FK TO PRODUCT
     related_products = models.ManyToManyField('self',blank=True,null=True, symmetrical=True)#, related_name='+' #if i used through it wasn't bi-directional and i had to do symmetrical=False
     video = EmbedVideoField(blank=True, null=True)
     content = RichTextUploadingField()
+    subcategory=models.ForeignKey(Subcategory,on_delete=models.PROTECT) #todo on_delete casacade? agar subcategory eshtebahi hazf she koli mahsool hazf mishan! che konim?
 
     #Product variations has FK to product
     def __str__(self):

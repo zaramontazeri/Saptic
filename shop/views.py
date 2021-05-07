@@ -9,16 +9,16 @@ from rest_framework import viewsets, permissions, status
 # Create your views here.
 from rest_framework.views import APIView
 
-from shop.models import Shop, Product, Menuitem, OrderedItem, Invoice, DiscountCode, ProductVariation, \
-    PromotionalCode,Transactions
+from shop.models import Shop, Product, OrderedItem, Invoice, DiscountCode, ProductVariation, \
+    PromotionalCode,Transactions,Category
 from shop.filterset import ProductListFilter, MyFilterBackend
-from shop.serializers import CategorySerializer, ProductListSerializer, MenuitemSerializer, ProductDetailSerializer, \
-    RelatedProductSerializer, DiscountCodeSerializer, PromotionalCodeSerializer,InvoiceSerializer
+from shop.serializers import CategorySerializer, ProductListSerializer, ProductDetailSerializer, \
+    RelatedProductSerializer, DiscountCodeSerializer, PromotionalCodeSerializer,InvoiceSerializer,SubcategorySerializer
 from services.payment import *
 
 
 class CategoryListAPIView(ListAPIView): #just category (without sub category
-    queryset = Shop.objects.all()
+    queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
 
@@ -42,14 +42,14 @@ class ProductsListAPIView(ListAPIView):
         queryset=Product.objects.all()
         return queryset
 
-class MenuItemListAPIView(ListAPIView): #show all of subcategories of a category
-    serializer_class = MenuitemSerializer
+class SubcategoryListAPIView(ListAPIView): #show all of subcategories of a category
+    serializer_class = SubcategorySerializer
     def get_queryset(self):
         c_id = self.kwargs['c_id']
         if c_id > 0:
-            queryset=Menuitem.objects.filter(category__id=c_id)
+            queryset=Subcategory.objects.filter(category__id=c_id)
         else :
-             queryset=Menuitem.objects.all()
+             queryset=Subcategory.objects.all()
         return queryset
 
 
