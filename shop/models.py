@@ -47,8 +47,8 @@ class Shop(models.Model):
     #     return reverse('burger_restaurantbranch_update', args=(self.pk,))
 
     class Meta:
-        verbose_name = 'Shop Shop'
-        verbose_name_plural = 'Shop Categories'
+        verbose_name = 'Shop '
+        verbose_name_plural = 'Shop '
 
     def __str__(self):
         return self.title
