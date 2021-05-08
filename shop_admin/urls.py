@@ -8,7 +8,7 @@ router.register(r'subcategory', SubCategoryViewSet)
 
 router.register(r'shop', ShopViewSet)
 router.register(r'product', ProductsViewSet)
-router.register(r'variation', ProductVariationViewSet)
+# router.register(r'variation', ProductVariationViewSet)
 
 urlpatterns = router.urls
 # urlpatterns = +[
