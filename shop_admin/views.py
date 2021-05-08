@@ -17,10 +17,10 @@ class ProductsViewSet(viewsets.ModelViewSet):
     queryset = models.Product.objects.all()
     serializer_class = serializers.ProductDetailSerializer
 
-class ProductVariationViewSet(viewsets.ModelViewSet):
-    """ViewSet for the OrderItem class"""
-    queryset = models.ProductVariation.objects.all()
-    serializer_class = serializers.ProductVariationSerializer
+# class ProductVariationViewSet(viewsets.ModelViewSet):
+#     """ViewSet for the OrderItem class"""
+#     queryset = models.ProductVariation.objects.all()
+#     serializer_class = serializers.ProductVariationSerializer
 class ShopViewSet(viewsets.ModelViewSet):
     """ViewSet for the OrderItem class"""
     queryset = models.Shop.objects.all()
