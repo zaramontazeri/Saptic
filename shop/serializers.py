@@ -66,7 +66,10 @@ class SubcategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Subcategory
         exclude = ['category']
-
+class SubcategoryAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subcategory
+        fields = '__all__'
 ###PRODUCT LIST
 ##############MANY2MANY WITH THROUGH  NESTED SERIALIZER#################################################
 # class ProductAttributeSerializer(serializers.ModelSerializer):
