@@ -61,7 +61,8 @@ INSTALLED_APPS = [
     'catalog',
     'shop',
     'corsheaders',
-    'domains'
+    'domains',
+    'django_extensions'
 ]
 
 MIDDLEWARE = [
