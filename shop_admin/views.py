@@ -16,7 +16,7 @@ class SubCategoryViewSet(viewsets.ModelViewSet):
 class ProductsViewSet(viewsets.ModelViewSet):
     """ViewSet for the OrderItem class"""
     queryset = models.Product.objects.all()
-    serializer_class = admin_serializers.Product
+    serializer_class = admin_serializers.ProductAdminSerializer
 
 # class ProductVariationViewSet(viewsets.ModelViewSet):
 #     """ViewSet for the OrderItem class"""
