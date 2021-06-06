@@ -1,8 +1,10 @@
 from django.shortcuts import render
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from shop import models, serializers
 from shop_admin import serializers as admin_serializers
+from rest_framework.generics import get_object_or_404
 # Create your views here.
 class CategoryViewSet(viewsets.ModelViewSet):
     """ViewSet for the OrderItem class"""
@@ -12,7 +14,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class SubCategoryViewSet(viewsets.ModelViewSet):
     """ViewSet for the OrderItem class"""
     queryset = models.Subcategory.objects.all()
-    serializer_class = serializers.SubcategoryAdminSerializer
+    serializer_class = admin_serializers.SubcategoryAdminSerializer
 
 class ProductsViewSet(viewsets.ModelViewSet):
     """ViewSet for the OrderItem class"""
@@ -38,4 +40,31 @@ class ShopViewSet(viewsets.ModelViewSet):
     """ViewSet for the OrderItem class"""
     queryset = models.Shop.objects.all()
     serializer_class = serializers.ShopSerializer
+
+class ProductAttributeViewSet(viewsets.ModelViewSet):
+    """ViewSet for the OrderItem class"""
+    queryset = models.ProductAttribute.objects.all()
+    serializer_class = serializers.ProductAttributeSerializer
+
+class FrameColorViewSet(viewsets.ModelViewSet):
+    """ViewSet for the OrderItem class"""
+    queryset = models.FrameColor.objects.all()
+    serializer_class = serializers.FrameColorSerializer
+
+class ProductVariationShopViewSet(viewsets.ModelViewSet):
+    """ViewSet for the OrderItem class"""
+    queryset = models.ProductVariationShop.objects.all()
+    serializer_class = serializers.ProductVariationShopSerializer
+class WalletViewSet(viewsets.ModelViewSet):
+    """ViewSet for the OrderItem class"""
+    queryset = models.Wallet.objects.all()
+    serializer_class = serializers.WalletSerializer
+
+class WalletProductCreateView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = admin_serializers.ProductWalletSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)      
 

@@ -135,7 +135,7 @@ class ProductAttribute(models.Model):
 
 class ProductChoice(models.Model):
     question = models.CharField(max_length=250)
-    product_variation = models.ForeignKey('ProductVariation', blank=True ,related_name='product_choice',on_delete=models.CASCADE)
+    product_variation = models.ForeignKey('ProductVariation', blank=True ,related_name='product_choices',on_delete=models.CASCADE)
 
     def __str__(self):
         return self.question
@@ -144,14 +144,14 @@ class Choices (models.Model):
     price = models.DecimalField( max_digits=10, decimal_places=0,default=Decimal('0.00'))
     value = models.CharField(max_length=150)
     description = models.CharField(max_length=250)
-    product_choice = models.ForeignKey(ProductChoice ,on_delete=models.CASCADE)
+    product_choice = models.ForeignKey(ProductChoice,related_name="choices" ,on_delete=models.CASCADE)
     def __str__(self):
         return self.value
 
 class GlassColor(models.Model):
     image = models.ImageField(upload_to='glass', blank=True, null=True)
     color_name = models.CharField(max_length=50)
-    product_variation = models.ForeignKey('ProductVariation',related_name="glass",on_delete=models.CASCADE)
+    product_variation = models.ForeignKey('ProductVariation',related_name="glasses",on_delete=models.CASCADE)
 
 class FrameColor(models.Model):
     image = models.ImageField(upload_to='glass', blank=True, null=True)
