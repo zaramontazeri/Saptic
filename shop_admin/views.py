@@ -28,10 +28,12 @@ class ProductsViewSet(viewsets.ModelViewSet):
 
         serializer = serializers.ProductDetailSerializer(queryset, many=True)
         return Response(serializer.data)
-# class ProductVariationViewSet(viewsets.ModelViewSet):
-#     """ViewSet for the OrderItem class"""
-#     queryset = models.ProductVariation.objects.all()
-#     serializer_class = serializers.ProductVariationSerializer
+
+
+class ProductVariationViewSet(viewsets.ModelViewSet):
+    """ViewSet for the OrderItem class"""
+    queryset = models.ProductVariation.objects.all()
+    serializer_class = admin_serializers.VariationAdminSerializer
 class ShopViewSet(viewsets.ModelViewSet):
     """ViewSet for the OrderItem class"""
     queryset = models.Shop.objects.all()
