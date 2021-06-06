@@ -73,7 +73,7 @@ class VariationAdminSerializer(serializers.ModelSerializer):
     # discount_price=serializers.ReadOnlyField()
     class Meta:
         model = ProductVariation
-        fields =["id","title_size","price","discount_price","occasional_discount","specifications","created_at","updated_at",'color','product_choices']
+        fields =["id","title_size","price","discount_price","occasional_discount","specifications","created_at","updated_at",'color','product_choices','glasses']
     
     def create(self, validated_data):
 
