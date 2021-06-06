@@ -5,8 +5,8 @@ from django.db.models.functions import Coalesce, Least
 from django.utils.datetime_safe import date, datetime
 from rest_framework import serializers
 from rest_framework.exceptions import MethodNotAllowed, ParseError, NotFound
-from shop.models import FrameColor, GlassColor, Shop, Product, ProductVariation, ProductVariationAttribute, ProductAttribute, \
-    ProductGalleryImage, ProductReview, DiscountCode, PromotionalCode,WorkingTime,OrderedItem,Transactions,Invoice,TestInPlace,Category,Subcategory
+from shop.models import Choices, FrameColor, GlassColor, ProductChoice, ProductVariationShop, Shop, Product, ProductVariation, ProductVariationAttribute, ProductAttribute, \
+    ProductGalleryImage, ProductReview, DiscountCode, PromotionalCode, Wallet,WorkingTime,OrderedItem,Transactions,Invoice,TestInPlace,Category,Subcategory
 
 
 class VideoField(serializers.Field):
@@ -66,16 +66,18 @@ class SubcategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Subcategory
         exclude = ['category']
-class SubcategoryAdminSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Subcategory
-        fields = '__all__'
+
 ###PRODUCT LIST
 ##############MANY2MANY WITH THROUGH  NESTED SERIALIZER#################################################
-# class ProductAttributeSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model=ProductAttribute
-#         fields =['title']
+class ProductAttributeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=ProductAttribute
+        fields ='__all__'
+
+class ProductVariationShopSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=ProductVariationShop
+        fields ='__all__'
 
 class ProductVariationAttributeSerializer(serializers.ModelSerializer):
     attribute = serializers.StringRelatedField()# I USED DED STR IN MODEL THAT SHOWS TITLE
@@ -93,10 +95,53 @@ class GlassColorSerializer(serializers.ModelSerializer):
     class Meta:
         model=GlassColor
         fields = '__all__'
+
+class ChoiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Choices
+        fields = '__all__'
+class ProductChoiceSerializer(serializers.ModelSerializer):
+    choices = ChoiceSerializer(source="choices",many=True)
+    class Meta:
+        model=ProductChoice
+        fields = '__all__'
+    def create(self, validated_data):
+        choices_data = validated_data.pop('choices')
+        product_choice = ProductChoice.objects.create(**validated_data)
+        for choice in choices_data:
+            choice["product_choice"]= product_choice.id
+            serializer = ChoiceSerializer(data=choice)
+            if serializer.is_valid():
+                serializer.save()           
+        return product_choice
+    def update(self, instance, validated_data):
+        _data = validated_data.pop("choices")
+        remove_items = { item.id: item for item in instance.choices.all() }
+        for item in _data:
+            item_id = item.get("id", None)
+
+            if item_id is None:
+                # new item so create this
+                item["product_choice"]= instance.id
+                serializer = ChoiceSerializer(data=item)
+                if serializer.is_valid():
+                    serializer.save()    
+            elif remove_items.get(item_id, None) is not None:
+                # update this item
+                instance_item = remove_items.pop(item_id)
+                serializer = ChoiceSerializer(instance_item, data=item)
+                if serializer.is_valid():
+                    serializer.save()
+        for item in remove_items.values():
+            item.delete()
+        for field in validated_data:
+            setattr(instance, field, validated_data.get(field, getattr(instance, field)))
+        instance.save()
+        return instance
 class VariationPriceSerializer(serializers.ModelSerializer):
     # specifications=ProductAttributeSerializer(many=True,read_only=True)
     specifications=ProductVariationAttributeSerializer(source='productvariationattribute_set', many=True)
-    color=FrameColorSerializer()
+    color=FrameColorSerializer(source='productvariationattribute_set', many=True)
 
     #IT IS IMPORTANT TO USE RELATED_NAME in models AND SOURCE in serializer . beCuz Calling the serializer for a ManyToManyField only works on the end point (i.e. ProductAttribute in this case).
     #link: 1-problem:https://www.reddit.com/r/django/comments/6yrh9k/drf_serialization_not_working_on_many_to_many/
@@ -155,13 +200,17 @@ class ProductReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model=ProductReview
         exclude=["product"]
-
+class WalletSerializer(serializers.ModelSerializer):
+    products=serializers.StringRelatedField()
+    class Meta:
+        model = Wallet
+        fields = '__all__'
 class ProductDetailSerializer(serializers.ModelSerializer):
     product_images=ProductGalleryImageSerializer(many=True) #if I wanted to use other name I had to use source=product_images
     variations=VariationPriceSerializer(many=True)
     related_products=RelatedProductSerializer(many=True)
     product_reviews=serializers.SerializerMethodField()
-
+    wallet_to_product =WalletSerializer(many=True)
     class Meta:
         model=Product
         fields="__all__"
@@ -288,8 +337,6 @@ class OrderedItemSerializer(serializers.ModelSerializer):
             # 'invoice' #????????
         )
         read_only_fields = ('pk', 'unit_base_price', 'unit_discount_price')
-
-# class TourPaymentSerializer(serializers.ModelSerializer):
 
 class TestInPlaceSerializer(serializers.ModelSerializer):
     orders = OrderedItemSerializer(many=True)
@@ -530,3 +577,5 @@ class TransactionSerializer(serializers.ModelSerializer):
             # 'statusNum' ???
             'authority'
         )
+
+
