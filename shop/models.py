@@ -135,7 +135,7 @@ class ProductAttribute(models.Model):
 
 class ProductChoice(models.Model):
     question = models.CharField(max_length=250)
-    product_variation = models.ForeignKey('ProductVariation', blank=True ,related_name='product_choice')
+    product_variation = models.ForeignKey('ProductVariation', blank=True ,related_name='product_choice',on_delete=models.CASCADE)
 
     def __str__(self):
         return self.question
