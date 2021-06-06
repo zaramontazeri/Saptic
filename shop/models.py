@@ -133,22 +133,46 @@ class ProductAttribute(models.Model):
     def __str__(self):
         return self.title
 
+class ProductChoice(models.Model):
+    question = models.CharField(max_length=250)
+    product_variation = models.ForeignKey('ProductVariation', blank=True ,related_name='product_choice')
+
+    def __str__(self):
+        return self.question
+
+class Choices (models.Model):
+    price = models.DecimalField( max_digits=10, decimal_places=0,default=Decimal('0.00'))
+    value = models.CharField(max_length=150)
+    description = models.CharField(max_length=250)
+    product_choice = models.ForeignKey(ProductChoice ,on_delete=models.CASCADE)
+    def __str__(self):
+        return self.value
+
+class GlassColor(models.Model):
+    image = models.ImageField(upload_to='glass', blank=True, null=True)
+    color_name = models.CharField(max_length=50)
+    product_variation = models.ForeignKey('ProductVariation',related_name="glass",on_delete=models.CASCADE)
+
+class FrameColor(models.Model):
+    image = models.ImageField(upload_to='glass', blank=True, null=True)
+    color_name = models.CharField(max_length=50)
+
 class ProductVariation(models.Model):
     title_size=models.CharField(max_length=100)
     product=models.ForeignKey(Product,on_delete=models.CASCADE,related_name="variations")
     specifications = models.ManyToManyField(ProductAttribute, blank=True, through='ProductVariationAttribute',related_name='specifications_to_person')
     price = models.DecimalField(max_digits=10, decimal_places=0)
-    # discount_price = models.DecimalField(max_digits=10, decimal_places=0, blank=True, null=True)
+    color = models.ForeignKey('FrameColor',related_name="product_variation",on_delete=models.PROTECT)
     occasional_discount= models.ForeignKey("OccasionalDiscount",related_name="occasional_discount_set",blank=True,null=True,on_delete=models.SET_NULL) #this parametere makes impact on discount price
     discount_price =models.DecimalField(max_digits=10, decimal_places=0,null=True,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at=models.DateTimeField(auto_now=True)
     test_in_place = models.BooleanField(default =False)
     shops = models.ManyToManyField(Shop , blank=True , through = "ProductVariationShop",related_name="shop_variation")
-
     def __str__(self):
         return self.product.title + " __ " +self.title_size
 
+# class ProductAccessories(models.Model):
 
 class ProductVariationAttribute(models.Model):
     product_variation=models.ForeignKey(ProductVariation,on_delete=models.CASCADE) #agar khode product nabashe. vojood attribute bi manie
@@ -170,6 +194,8 @@ class ProductReview(models.Model):
     comment=models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     rate = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(5)], default=0)
+    like = models.IntegerField(default=0)
+    dislike = models.IntegerField(default=0)
     confirmed=models.BooleanField(default=False)
     #todo write afte cheking USER: def __str__(self):
     #     return "User: {username} | Tour: {id}".format(username=self.user.username, id=self.tour.id)
@@ -216,6 +242,7 @@ class Invoice(models.Model):
     customer = models.ForeignKey(settings.AUTH_USER_MODEL,verbose_name=_("customer"), null=True,blank=True, on_delete=models.SET_NULL)
     # u can search usage of through in here:https://docs.djangoproject.com/en/2.2/topics/db/models/
     product_items = models.ManyToManyField(ProductVariation,verbose_name=_("product items"), through="OrderedItem")  #
+    choices =  models.ManyToManyField(Choices,verbose_name=_("invoice")) 
     total_price=models.DecimalField(verbose_name=_("total price"),default=Decimal('0.00'),max_digits=19, decimal_places=0,null=True,blank=True)  # totalCost #todo #decimal 2 or 3?)
     #serial_number (is it secure if i use id for each invoice??? or should i make serial number myself?)
     description=models.CharField(verbose_name=_("description"),max_length=200 , null=True, blank=True)
@@ -260,6 +287,7 @@ class TestInPlace(models.Model):
     seller = models.ForeignKey(Seller,verbose_name=_("seller"), on_delete=models.SET_NULL, null=True) #from seller you can also undrestand which restaurant it is
     customer = models.ForeignKey(settings.AUTH_USER_MODEL,verbose_name=_("customer"), null=True,blank=True, on_delete=models.SET_NULL)
     product_items = models.ManyToManyField(ProductVariation,verbose_name=_("product items"), through="OrderedTestItem")  #
+    choices =  models.ManyToManyField(Choices,verbose_name=_("invoice")) 
     description=models.CharField(verbose_name=_("description"),max_length=200 , null=True, blank=True)
     date=models.DateTimeField(verbose_name=_("date"),auto_now_add=True ,null=True) #todo how to make this automatic and JALALI
     address = models.ForeignKey("users.Address",on_delete=models.PROTECT,default="-1") #if a user has address in inovice I dont let the user to delete
@@ -421,7 +449,7 @@ class PromotionalCode(models.Model):
 
     # strategy = models.ForeignKey(PromotionCodeStrategy,on_delete=models.DO_NOTHING,null=True)
 
-        
+
 
 class WorkingTime(models.Model):
     DATE_CHOICES = (
