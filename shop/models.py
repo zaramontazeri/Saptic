@@ -242,7 +242,6 @@ class Invoice(models.Model):
     customer = models.ForeignKey(settings.AUTH_USER_MODEL,verbose_name=_("customer"), null=True,blank=True, on_delete=models.SET_NULL)
     # u can search usage of through in here:https://docs.djangoproject.com/en/2.2/topics/db/models/
     product_items = models.ManyToManyField(ProductVariation,verbose_name=_("product items"), through="OrderedItem")  #
-    choices =  models.ManyToManyField(Choices,verbose_name=_("invoice")) 
     total_price=models.DecimalField(verbose_name=_("total price"),default=Decimal('0.00'),max_digits=19, decimal_places=0,null=True,blank=True)  # totalCost #todo #decimal 2 or 3?)
     #serial_number (is it secure if i use id for each invoice??? or should i make serial number myself?)
     description=models.CharField(verbose_name=_("description"),max_length=200 , null=True, blank=True)
@@ -303,6 +302,7 @@ class OrderedItem(models.Model):
     product_variation_item=models.ForeignKey(ProductVariation,verbose_name=_("product item"),null=True,blank=True, on_delete=models.SET_NULL,related_name="products") #,related_query_name="products"
     invoice=models.ForeignKey(Invoice,verbose_name=_("invoice"),on_delete=models.SET_NULL, null=True,related_name="orders")
     #todo what about on_delete???
+    choices =  models.ManyToManyField(Choices,verbose_name=_("ordered_item")) 
 
     qty = models.IntegerField(verbose_name=_("quantity"),null=True)
     #IMP: I  use unit price so your previous invoices won't be incorrect after you changed a food's price.
@@ -323,6 +323,7 @@ class OrderedTestItem(models.Model):
     product_variation_item=models.ForeignKey(ProductVariation,verbose_name=_("product item"),null=True,blank=True, on_delete=models.SET_NULL,related_name="products_test") #,related_query_name="products"
     test_in_place=models.ForeignKey(TestInPlace,verbose_name=_("invoice"),on_delete=models.SET_NULL, null=True,related_name="orders")
     #todo what about on_delete???
+    choices =  models.ManyToManyField(Choices,verbose_name=_("ordered_test_item")) 
 
     qty = models.IntegerField(verbose_name=_("quantity"),null=True)
     #IMP: I  use unit price so your previous invoices won't be incorrect after you changed a food's price.
@@ -485,12 +486,12 @@ class Gateway(models.Model):
     def __str__(self):
         return self.name
 
-    def get_absolute_url(self):
-        return reverse('app_name_gateway_detail', args=(self.pk,))
+    # def get_absolute_url(self):
+    #     return reverse('app_name_gateway_detail', args=(self.pk,))
 
 
-    def get_update_url(self):
-        return reverse('app_name_gateway_update', args=(self.pk,))
+    # def get_update_url(self):
+    #     return reverse('app_name_gateway_update', args=(self.pk,))
 
 class Wallet(models.Model):
     title = models.CharField(max_length=64)
