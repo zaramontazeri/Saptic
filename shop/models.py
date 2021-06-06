@@ -286,7 +286,6 @@ class TestInPlace(models.Model):
     seller = models.ForeignKey(Seller,verbose_name=_("seller"), on_delete=models.SET_NULL, null=True) #from seller you can also undrestand which restaurant it is
     customer = models.ForeignKey(settings.AUTH_USER_MODEL,verbose_name=_("customer"), null=True,blank=True, on_delete=models.SET_NULL)
     product_items = models.ManyToManyField(ProductVariation,verbose_name=_("product items"), through="OrderedTestItem")  #
-    choices =  models.ManyToManyField(Choices,verbose_name=_("invoice")) 
     description=models.CharField(verbose_name=_("description"),max_length=200 , null=True, blank=True)
     date=models.DateTimeField(verbose_name=_("date"),auto_now_add=True ,null=True) #todo how to make this automatic and JALALI
     address = models.ForeignKey("users.Address",on_delete=models.PROTECT,default="-1") #if a user has address in inovice I dont let the user to delete
