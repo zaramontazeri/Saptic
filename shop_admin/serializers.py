@@ -63,8 +63,8 @@ class SubcategoryAdminSerializer(serializers.ModelSerializer):
 class VariationAdminSerializer(serializers.ModelSerializer):
     # specifications=ProductAttributeSerializer(many=True,read_only=True)
     specifications=ProductVariationAttributeSerializer(source='productvariationattribute_set', many=True)
-    product_choices = ProductChoiceSerializer(source="product_choices",many=True)
-    glasses = GlassColorSerializer(source ="glasses",many=True)
+    product_choices = ProductChoiceSerializer(many=True)
+    glasses = GlassColorSerializer(many=True)
     color=FrameColorSerializer()
     #IT IS IMPORTANT TO USE RELATED_NAME in models AND SOURCE in serializer . beCuz Calling the serializer for a ManyToManyField only works on the end point (i.e. ProductAttribute in this case).
     #link: 1-problem:https://www.reddit.com/r/django/comments/6yrh9k/drf_serialization_not_working_on_many_to_many/
