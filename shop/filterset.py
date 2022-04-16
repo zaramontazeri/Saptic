@@ -1,13 +1,13 @@
 import decimal
 
 import rest_framework_filters as filters
-from django.db.models import Min, F, Count, Q, Value,Max
+from django.db.models import Min, F, Count, Q, Value,Max, query
 from django.db.models.functions import Least, Coalesce
 from django.utils.datetime_safe import date,datetime
 from rest_framework_filters.backends import RestFrameworkFilterBackend
 # from tours.models import Tour, TourCategory, City, TourVariation, Currency, TourGuide, TourGalleryImage, TourTime
 # from tours.utils import convert, deconvert
-from shop.models import Product
+from shop.models import ChoiceAttribute, Product, ProductVariation, ProductVariationAttribute
 
 #
 class ProductOrderingFilter(filters.OrderingFilter):
@@ -90,13 +90,23 @@ class MyFilterBackend(RestFrameworkFilterBackend):
 
         return kwargs
 
-# class MenuItemFilter(filters.FilterSet):
-#     class Meta:
-#         model = Menuitem
-#         fields = {
-#             'title': ['exact', 'in', 'startswith'],
-#             'id': [ 'in'],
-#         }
+
+class ChoiceAttributeFilter(filters.FilterSet):
+    class Meta:
+        model = ChoiceAttribute
+        fields = {
+            'title': ['exact', 'in', 'startswith'],
+            'id': [ 'in'],
+        }
+class ProductVariationAttributeFilter(filters.FilterSet):
+    choice_attribute = filters.RelatedFilter(ChoiceAttributeFilter,field_name='choice_attribute',queryset = ChoiceAttribute.objects.all())
+
+    class Meta:
+        model = ProductVariationAttribute
+        fields = {
+            'attribute_value': ['exact', 'in', 'startswith'],
+            'id': [ 'in'],
+        }
 
 # class CityFilter(filters.FilterSet):
 #     class Meta:
@@ -110,50 +120,52 @@ class MyFilterBackend(RestFrameworkFilterBackend):
 #         fields = {'language': ['exact', 'in', 'startswith']}
 #
 #
-# class VariationFilter(filters.FilterSet):
-#     max_price = filters.NumberFilter(field_name="price",method="get_price_max")
-#     min_price = filters.NumberFilter(field_name="price",method="get_price_min")
-#     class Meta:
-#         model = TourVariation
-#         fields = {
-#         }
-#
-#
-#     def get_price_max(self, qs, name, value):
-#         currency  = self.data.get('currency','aed')
-#         price = convert(currency,value)
-#
-#         return qs.filter(price__lte=price)
-#
-#     def get_price_min(self, qs, name, value):
-#         currency  = self.data.get('currency','aed')
-#         price = convert(currency,value)
-#
-#         return qs.filter(price__gte=price)
-#
-# class GalleryFilter(filters.FilterSet):
-#     ordering = filters.OrderingFilter(
-#         fields=(
-#             ('caption','caption')
-#         )
-#     )
+class VariationFilter(filters.FilterSet):
+    # max_price = filters.NumberFilter(field_name="price",method="get_price_max")
+    # min_price = filters.NumberFilter(field_name="price",method="get_price_min")
+    specifications = filters.RelatedFilter(ProductVariationAttributeFilter,field_name='specifications',queryset = ProductVariationAttribute.objects.all())
+    class Meta:
+        model = ProductVariation
+        fields = {
+        }
+
+
+    # def get_price_max(self, qs, name, value):
+    #     return qs.filter(price__lte=value)
+
+    # def get_price_min(self, qs, name, value):
+    #     return qs.filter(price__gte=value)
+
+class GalleryFilter(filters.FilterSet):
+    ordering = filters.OrderingFilter(
+        fields=(
+            ('caption','caption')
+        )
+    )
 # class TourTimeFilter(filters.FilterSet):
 #     class Meta:
 #         model = TourTime
 #         fields = {'title': ['exact', 'in', 'startswith']}
-#
-#
+
+
 #
 class ProductListFilter(filters.FilterSet):
     # menuitem = filters.RelatedFilter(MenuItemFilter, field_name='menuitem', queryset=Menuitem.objects.all())
 #     city = filters.RelatedFilter(CityFilter, field_name='city', queryset=City.objects.all())
-#     # variations = filters.RelatedFilter(VariationFilter, queryset=TourVariation.objects.all())
+    variations = filters.RelatedFilter(VariationFilter, queryset=ProductVariation.objects.all())
 #     guide = filters.RelatedFilter(TourGuideFilter,field_name="guide_languages", queryset=TourGuide.objects.all())
     top_deals = filters.BooleanFilter(label='top_deals', method='get_top_deals')
 #     gallery = filters.RelatedFilter(GalleryFilter,field_name="gallery", queryset=TourGalleryImage.objects.all())
 #     time = filters.RelatedFilter(TourTimeFilter,field_name='time',queryset=TourTime.objects.all())
     max_price = filters.NumberFilter(field_name="price",method="get_price_max")
     min_price = filters.NumberFilter(field_name="price",method="get_price_min")
+    category = filters.CharFilter(field_name='subcategory__category__slug',lookup_expr='iexact')
+    subcategory = filters.CharFilter(field_name='subcategory__slug',lookup_expr='iexact')
+    test_in_place = filters.BooleanFilter(field_name='variations__test_in_place')
+    attribute = filters.CharFilter(field_name='variations__attributes__attribute__slug',lookup_expr='iexact')
+    attribute_value = filters.CharFilter(field_name='variations__attributes__choice_attribute__slug',lookup_expr='iexact')
+    color = filters.CharFilter(label='color', method='get_colors')
+
     ordering = ProductOrderingFilter(
     fields=(
             # ('created_at', 'created_at'),
@@ -164,7 +176,7 @@ class ProductListFilter(filters.FilterSet):
     class Meta:
         model = Product
         fields={
-            "title":["lte",'gte',"exact"],
+            "title":["lte",'gte',"contains"],
             "description":["lte",'gte',"exact"],
         }
     def get_top_deals(self, qs, name, value):
@@ -224,4 +236,14 @@ class ProductListFilter(filters.FilterSet):
                 except Exception as ex:
                     print(ex)
             qs = qs.filter(variations__in=varss)
+        return qs
+    def get_attibutes(self, qs, name, value):
+        # currency = self.data.get('currency', 'aed')
+        if value:
+           print(qs , name , value)
+        return qs
+    def get_colors(self, qs, name, value):
+        # currency = self.data.get('currency', 'aed')
+        colors = value.split("~")
+        qs = qs.filter(variations__color__slug__in=colors)
         return qs

@@ -1,6 +1,7 @@
 
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+from django.db.models.fields.related import ForeignKey
 from django.utils.html import format_html
 from django.conf import settings
 from decimal import Decimal
@@ -8,6 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from domains.models import Domain
 from embed_video.fields import EmbedVideoField
 from ckeditor_uploader.fields import RichTextUploadingField
+from polymorphic.models import PolymorphicModel
 
 #todo IMPORTANT: REMEMBER THAT THIS APP IS JUST IN PERSION
 
@@ -21,16 +23,16 @@ from ckeditor_uploader.fields import RichTextUploadingField
 class Shop(models.Model):
     title = models.CharField(max_length=64)
     slug = models.SlugField(allow_unicode=True)
-    cover = models.ImageField(
-        upload_to='covers/shop/category', blank=True, null=True) #todo doesnt it better to not be null true
+    cover = models.ForeignKey("media_app.File",on_delete=models.CASCADE) #todo doesnt it better to not be null true
     phone_number = models.CharField(verbose_name=_("phone number"),max_length=20)
     full_address=models.TextField(verbose_name=_("full address"))
-    hours = models.CharField(verbose_name=_("hours"),max_length=150)
+    # hours = models.CharField(verbose_name=_("hours"),max_length=150)
     description=models.TextField(verbose_name=_("description"),null=True,blank=True)
-    order = models.IntegerField(verbose_name=_("order"),unique=True)
+    order = models.IntegerField(verbose_name=_("order"),null=True,blank=True)
     domain = models.ForeignKey(Domain,verbose_name=_("domain"),on_delete=models.CASCADE , related_name='branch')
     enable = models.BooleanField(verbose_name=_("enable"),default=True)
-    owner = models.ManyToManyField("auth_rest_phone.UserProfile")
+    #"auth_rest_phone.UserProfile"
+    owner = models.ManyToManyField(settings.AUTH_USER_MODEL)
     class Meta:
         ordering = ('-order',)
         verbose_name = _('Restaurant Branch')
@@ -39,12 +41,6 @@ class Shop(models.Model):
     def __str__(self):
         return  self.title
 
-    # def get_absolute_url(self):
-    #     return reverse('burger:burger_menu', args=(self.pk,))
-
-
-    # def get_update_url(self):
-    #     return reverse('burger_restaurantbranch_update', args=(self.pk,))
 
     class Meta:
         verbose_name = 'Shop '
@@ -52,6 +48,23 @@ class Shop(models.Model):
 
     def __str__(self):
         return self.title
+
+class Depot(models.Model):
+
+    # Fields
+    name = models.CharField(max_length=255)
+    created = models.DateTimeField(auto_now_add=True, editable=False)
+    last_updated = models.DateTimeField(auto_now=True, editable=False)
+    capacity = models.IntegerField()
+    address = models.TextField(max_length=100)
+    owner = models.ManyToManyField(settings.AUTH_USER_MODEL,null=True,blank=True)
+
+
+    class Meta:
+        ordering = ('-created',)
+
+    def __str__(self):
+        return u'%s' % self.name
 
 class Seller(models.Model):
     seller = models.ForeignKey(settings.AUTH_USER_MODEL,null=True,blank=True,on_delete=models.SET_NULL)
@@ -62,8 +75,7 @@ class Seller(models.Model):
 class Category(models.Model):
     title = models.CharField(max_length=64)
     slug = models.SlugField(allow_unicode=True)
-    cover = models.ImageField(
-        upload_to='covers/shop/category', blank=True, null=True) #todo doesnt it better to not be null true
+    cover_image = models.ForeignKey("media_app.File",on_delete=models.CASCADE,null=True,blank=True) #todo doesnt it better to not be null true
 
     class Meta:
         verbose_name = 'Shop Category'
@@ -76,6 +88,8 @@ class Subcategory(models.Model):
     title = models.CharField(max_length=64)
     slug = models.SlugField(allow_unicode=True)
     category=models.ForeignKey(Category,related_name="sub_category",on_delete=models.PROTECT)
+    cover = models.ForeignKey("media_app.File",on_delete=models.CASCADE,null=True,blank=True) #todo doesnt it better to not be null true
+
     def __str__(self):
         return self.category.title+"__"+self.title
     class Meta:
@@ -95,9 +109,8 @@ class Subcategory(models.Model):
 
 class Product(models.Model):
     #todo rating
-    cover = models.ImageField(
-        upload_to='covers/shop/product', blank=True, null=True)
     title=models.CharField(max_length=200)
+    slug = models.SlugField(allow_unicode=True,null=True,unique=True)
     #GALLERY HAS FK TO PRODUCT
     description=models.TextField()
     #Review HAS FK TO PRODUCT
@@ -112,9 +125,9 @@ class Product(models.Model):
 
 #todo alan hame aks haye gallery mahsool bedoon dar nazar gereftan size yekjast. ok hast?
 class ProductGalleryImage(models.Model):
-    product=models.ForeignKey(Product,related_name="product_images",on_delete=models.CASCADE)
+    product=models.ForeignKey("ProductVariation",related_name="product_variations_images",on_delete=models.CASCADE)
     caption = models.CharField(max_length=128)
-    image = models.ImageField(upload_to='product/gallery')
+    image = models.ForeignKey("media_app.File",on_delete=models.CASCADE) #todo doesnt it better to not be null true
     order = models.PositiveIntegerField(default=0, blank=False, null=False)
     def image_tag(self):
         if self.image:
@@ -130,6 +143,14 @@ class ProductGalleryImage(models.Model):
 
 class ProductAttribute(models.Model):
     title=models.CharField(max_length=150)
+    slug = models.SlugField(allow_unicode=True)
+    def __str__(self):
+        return self.title
+
+class ChoiceAttribute(models.Model):
+    title=models.CharField(max_length=150)
+    attribute = models.ForeignKey(ProductAttribute,on_delete=models.CASCADE,related_name="choices")
+    slug = models.SlugField(allow_unicode=True)
     def __str__(self):
         return self.title
 
@@ -149,18 +170,22 @@ class Choices (models.Model):
         return self.value
 
 class GlassColor(models.Model):
-    image = models.ImageField(upload_to='glass', blank=True, null=True)
+    image = models.ForeignKey("media_app.File",on_delete=models.CASCADE) #todo doesnt it better to not be null true
     color_name = models.CharField(max_length=50)
     product_variation = models.ForeignKey('ProductVariation',related_name="glasses",on_delete=models.CASCADE)
 
 class FrameColor(models.Model):
-    image = models.ImageField(upload_to='glass', blank=True, null=True)
+    image = models.ForeignKey("media_app.File",on_delete=models.CASCADE) #todo doesnt it better to not be null true
     color_name = models.CharField(max_length=50)
+    slug = models.SlugField(allow_unicode=True)
 
 class ProductVariation(models.Model):
+    cover = models.ForeignKey("media_app.File",on_delete=models.CASCADE) #todo doesnt it better to not be null true
+
     title_size=models.CharField(max_length=100)
+    slug = models.SlugField(allow_unicode=True,unique=True)
     product=models.ForeignKey(Product,on_delete=models.CASCADE,related_name="variations")
-    specifications = models.ManyToManyField(ProductAttribute, blank=True, through='ProductVariationAttribute',related_name='specifications_to_person')
+    specifications = models.ManyToManyField(ChoiceAttribute, blank=True,null=True,related_name='variations')
     price = models.DecimalField(max_digits=10, decimal_places=0)
     color = models.ForeignKey('FrameColor',related_name="product_variation",on_delete=models.PROTECT)
     occasional_discount= models.ForeignKey("OccasionalDiscount",related_name="occasional_discount_set",blank=True,null=True,on_delete=models.SET_NULL) #this parametere makes impact on discount price
@@ -168,22 +193,23 @@ class ProductVariation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at=models.DateTimeField(auto_now=True)
     test_in_place = models.BooleanField(default =False)
-    shops = models.ManyToManyField(Shop , blank=True , through = "ProductVariationShop",related_name="shop_variation")
     def __str__(self):
         return self.product.title + " __ " +self.title_size
 
 # class ProductAccessories(models.Model):
 
 class ProductVariationAttribute(models.Model):
-    product_variation=models.ForeignKey(ProductVariation,on_delete=models.CASCADE) #agar khode product nabashe. vojood attribute bi manie
-    attribute=models.ForeignKey(ProductAttribute,on_delete=models.PROTECT) #agar attribute ro bekhaym pak konim injoori mifahmim ke oon attribute baraye baghie estefade shode
-    attribute_value=models.CharField(max_length=150)
+    product_variation=models.ForeignKey(ProductVariation,on_delete=models.CASCADE,related_name="attributes") #agar khode product nabashe. vojood attribute bi manie
+    attribute=models.ForeignKey(ProductAttribute,on_delete=models.PROTECT,related_name="attributes",null=True,blank=True)
+    choice_attribute=models.ForeignKey(ChoiceAttribute,on_delete=models.PROTECT,null=True,blank=True) #agar attribute ro bekhaym pak konim injoori mifahmim ke oon attribute baraye baghie estefade shode#agar attribute ro bekhaym pak konim injoori mifahmim ke oon attribute baraye baghie estefade shode
+    attribute_value=models.CharField(max_length=150,null=True,blank=True)
 
 class ProductVariationShop(models.Model):
     shop = models.ForeignKey(Shop,on_delete=models.CASCADE ,related_name="shop")
     variation = models.ForeignKey(ProductVariation,on_delete=models.CASCADE ,related_name = "variation")
     code = models.CharField(max_length=150)
-    count = models.IntegerField()
+    product_existent = models.IntegerField()
+    product_sold = models.IntegerField()
 #todo rating is connected to reviews??????
 
 
@@ -203,6 +229,98 @@ class ProductReview(models.Model):
         return self.product.title +"__"+str(self.created_at.date())
 
 
+
+class ProductBox(models.Model):
+
+    # Fields
+    created = models.DateTimeField(auto_now_add=True, editable=False)
+    last_updated = models.DateTimeField(auto_now=True, editable=False)
+    count_in_box = models.IntegerField()
+    name = models.CharField(max_length=30)
+    code = models.CharField(max_length=12)
+
+    # Relationship Fields
+    shop = models.ForeignKey(
+        'shop.Shop',
+        on_delete=models.CASCADE, related_name="productboxes", null=True,blank=True
+    )
+    depot = models.ForeignKey(
+        'shop.Depot',
+        on_delete=models.CASCADE, related_name="productboxes", null=True,blank=True
+    )
+    class Meta:
+        ordering = ('-created',)
+
+    def __unicode__(self):
+        return u'%s' % self.pk
+
+class ProductBoxTransfer(models.Model):
+
+    # Fields
+    created = models.DateTimeField(auto_now_add=True, editable=False)
+    last_updated = models.DateTimeField(auto_now=True, editable=False)
+    # Relationship Fields
+    box = models.ForeignKey(
+        'shop.ProductBox',
+        on_delete=models.CASCADE, related_name="productboxtransfers", 
+    )
+    from_shop = models.ForeignKey(
+        'shop.Shop',
+        on_delete=models.CASCADE, related_name="from_productboxtransfers",null=True,blank=True
+    )
+    to_shop = models.ForeignKey(
+        'shop.Shop',
+        on_delete=models.CASCADE, related_name="to_productboxtransfers",null=True,blank=True
+    )
+    from_depot = models.ForeignKey(
+        'shop.Depot',
+        on_delete=models.CASCADE, related_name="from_productboxtransfers",null=True,blank=True
+    )
+    to_depot = models.ForeignKey(
+        'shop.Depot',
+        on_delete=models.CASCADE, related_name="to_productboxtransfers",null=True,blank=True
+    )
+    class Meta:
+        ordering = ('-created',)
+
+    def __unicode__(self):
+        return u'%s' % self.pk
+
+
+class ProductInstance(models.Model):
+
+    # Fields
+    created = models.DateTimeField(auto_now_add=True, editable=False)
+    last_updated = models.DateTimeField(auto_now=True, editable=False)
+    code = models.CharField(max_length=12)
+    # Relationship Fields
+    box = models.ForeignKey(
+        'shop.ProductBox',
+        on_delete=models.CASCADE, related_name="productinstances",
+        null=True,blank=True 
+    )
+    sold_out = models.ForeignKey(
+        'shop.Shop',
+        on_delete=models.CASCADE, related_name="productinstances", 
+        null=True,blank=True
+    )
+    product_variation = models.ForeignKey(
+        'shop.ProductVariation',
+        on_delete=models.CASCADE, related_name="productinstances", 
+    )
+    glass_color = models.ForeignKey(
+        'shop.GlassColor',
+        on_delete=models.CASCADE, related_name="productinstances", 
+    )
+    choices = models.ManyToManyField(
+        'shop.Choices',
+         related_name="productinstances", 
+    )
+    class Meta:
+        ordering = ('-created',)
+
+    def __str__(self):
+        return u'%s' % self.code
 
 #todo#################################################################
 
@@ -247,12 +365,13 @@ class Invoice(models.Model):
     description=models.CharField(verbose_name=_("description"),max_length=200 , null=True, blank=True)
     date=models.DateTimeField(verbose_name=_("date"),auto_now_add=True ,null=True) #todo how to make this automatic and JALALI
     # address = models.TextField(verbose_name=_("address"),null=True,default="-1")
-    address = models.ForeignKey("users.Address",on_delete=models.PROTECT,default="-1") #if a user has address in inovice I dont let the user to delete
+    address = models.ForeignKey("users_info.Address",on_delete=models.PROTECT,default="-1") #if a user has address in inovice I dont let the user to delete
     #todo what about default and on_delete? talk to erfan
     discount_code = models.ForeignKey("DiscountCode" ,on_delete=models.SET("deleted"), related_name="payments", null=True) #It's first model of discounting
     promotional_code = models.ForeignKey("PromotionalCode", on_delete=models.SET("deleted"), related_name="promo_payments",null=True, blank=True) #it's user base
     shipping_price =models.DecimalField(verbose_name=_("shipping price"),default=Decimal('0.00'),max_digits=19, decimal_places=0,null=True,blank=True) 
     vtax = models.DecimalField(verbose_name=_("value added price"),default=Decimal('0.00'),max_digits=19, decimal_places=0,null=True,blank=True) 
+    wallet = models.ForeignKey('Wallet',on_delete=models.CASCADE,related_name="invoices")
     class Meta:
         ordering = ('-pk',)
         verbose_name = _('Invoice')
@@ -288,7 +407,7 @@ class TestInPlace(models.Model):
     product_items = models.ManyToManyField(ProductVariation,verbose_name=_("product items"), through="OrderedTestItem")  #
     description=models.CharField(verbose_name=_("description"),max_length=200 , null=True, blank=True)
     date=models.DateTimeField(verbose_name=_("date"),auto_now_add=True ,null=True) #todo how to make this automatic and JALALI
-    address = models.ForeignKey("users.Address",on_delete=models.PROTECT,default="-1") #if a user has address in inovice I dont let the user to delete
+    address = models.ForeignKey("users_info.Address",on_delete=models.PROTECT,default="-1") #if a user has address in inovice I dont let the user to delete
     shipping_price =models.DecimalField(verbose_name=_("shipping price"),default=Decimal('0.00'),max_digits=19, decimal_places=0,null=True,blank=True) 
     class Meta:
         ordering = ('-pk',)
@@ -442,7 +561,7 @@ class PromotionalCode(models.Model):
         MinValueValidator(1), MaxValueValidator(100)))
     # minimum_expendable_value = models.IntegerField(default=0)
     maximum_value = models.IntegerField(default=0)
-    num_of_used = models.IntegerField(default=0, editable=False) # ye adad bezar va har dafe tyeki azash kam kon
+    num_of_used = models.IntegerField(default=0) # ye adad bezar va har dafe tyeki azash kam kon
 
     expire_at = models.DateField()
     disable =  models.BooleanField(default=False)
@@ -492,13 +611,45 @@ class Gateway(models.Model):
     # def get_update_url(self):
     #     return reverse('app_name_gateway_update', args=(self.pk,))
 
+class ChargeTransaction(models.Model):
+    SATAUS_CHOICES = (
+        ('success', 'Success'),
+        ('failed', 'Failed'),
+        ('pending',"Pending")
+    )
+    # amount and date #todo I have total price and date in invoice and I have a fk to invoice , should i use "amount" and "date" here too?
+    wallet_charge=models.ForeignKey("UserWallet",verbose_name=_("invoice"), on_delete=models.PROTECT,related_name="transaction")
+    refId = models.CharField(_("trackingCode"), max_length=100) #todo BIG_TODO what about verbose name
+    bankRefId = models.CharField(verbose_name=_("bankRefId"),max_length=100)
+    status = models.CharField(verbose_name=_("status"),max_length=10, choices=SATAUS_CHOICES)
+    statusNum = models.IntegerField(verbose_name=_("status number"))
+    # gateway = models.ForeignKey(Gateway,verbose_name=_("gateway"), on_delete=models.PROTECT)
+    authority = models.CharField(verbose_name=_("authority"),max_length=20)
+    value = models.DecimalField(max_digits=10, decimal_places=0)
+    class Meta:
+        ordering = ('-pk',)
+        verbose_name = _('Transaction')
+        verbose_name_plural = _('Transactions')
+
+    def __str__(self):
+        return str(self.pk)+"_"+self.invoice.seller.branch_name.branch_name
+
+
 class Wallet(models.Model):
     title = models.CharField(max_length=64)
     products = models.ManyToManyField("Product", blank=True,related_name='wallet_to_product')
-    users = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, through='UserWallet',related_name='wallet_to_user')
-    cover = models.ImageField(upload_to='covers/wallet', blank=True, null=True)
+    users = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True,null=True, through='UserWallet',related_name='wallet_to_user')
+    cover =models.ForeignKey("media_app.File",on_delete=models.CASCADE) #todo doesnt it better to not be null true
 
 class UserWallet(models.Model):
     wallet=models.ForeignKey(Wallet,on_delete=models.PROTECT) #agar khode product nabashe. vojood attribute bi manie
     user=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT) #agar attribute ro bekhaym pak konim injoori mifahmim ke oon attribute baraye baghie estefade shode
-    value =models.IntegerField()
+    value =models.DecimalField( max_digits=10, decimal_places=0)
+
+
+class ShopRequest(models.Model):
+    shop  = models.ForeignKey(Shop,on_delete=models.CASCADE,related_name="shop_requests")
+    variation = models.ForeignKey(ProductVariation,on_delete=models.CASCADE,related_name="shop_requests")
+    count = models.IntegerField()
+    description = models.TextField()
+

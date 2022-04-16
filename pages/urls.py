@@ -11,7 +11,7 @@ urlpatterns = [
     path('contact/', views.ContactMessageCreate.as_view()),
     path('subscription/', views.SubscriptionCreate.as_view()),
     path('company/', views.CompanyDetail.as_view()),
-    path('content/<str:page_name>/<str:section>', views.PageContentView.as_view()),
+    path('content/<str:page_name>/', views.PageContentView.as_view()),
     # path("test",views.Test.as_view()),
 
 ]

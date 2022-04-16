@@ -45,20 +45,21 @@ urlpatterns = [
                                         cache_timeout=0), name='schema-swagger-ui'),
     url(r'^redoc/$', schema_view.with_ui('redoc',
                                          cache_timeout=0), name='schema-redoc'),
-    path('api-auth/', include('rest_framework.urls')),
+    path('api-auth/jwt', include('rest_framework.urls')),
     # path('api/auth', include('auth_rest.urls')),
     # path('api/auth', include('auth_rest.urls.jwt')),
     # path('api/auth/', include('auth_rest.social.urls')),
     path('api/auth/', include('auth_rest_phone.urls')),
     path('api/auth/', include('auth_rest_phone.urls.jwt')),
     path('admin/', admin.site.urls),
-    path('users/', include('users.urls')),
+    path('users/', include('users_info.urls')),
     path('pages/', include('pages.urls')),
     path('blog/', include('blog.urls')),
     path('ckeditor/', include('ckeditor_uploader.urls')),
     path('catalog/', include('catalog.urls')),
     path('shop/', include('shop.urls')),
     path('shop_admin/', include('shop_admin.urls')),
+    path('media_upload/',include('media_app.urls'))
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

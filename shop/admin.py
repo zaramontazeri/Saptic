@@ -1,8 +1,12 @@
 from django.contrib import admin
+from django.contrib.admin.options import TabularInline
 from django.forms import ModelForm,ModelMultipleChoiceField
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from nested_inline.admin import NestedStackedInline,NestedTabularInline, NestedModelAdmin
 from shop.models import (
+    Choices,
+    FrameColor,
+    ProductChoice,
     Shop,
     Product,
     ProductGalleryImage,
@@ -14,6 +18,7 @@ from shop.models import (
     Transactions,
     Invoice,
     DiscountCode,
+    Wallet,
     WorkingTime,
     OccasionalDiscount,
     Category,
@@ -48,7 +53,15 @@ class ShopAdmin(admin.ModelAdmin):
 class ProductGalleryImageInline(NestedTabularInline):#admin.TabularInline
     model = ProductGalleryImage
     extra = 3
+class ChoicesInlineAdmin(NestedTabularInline):
+    model = Choices
 
+class ProductChoicesInlineAdmin(NestedTabularInline):
+    model = ProductChoice
+    inlines = [
+        # ProductGalleryImageInline,
+        ChoicesInlineAdmin,
+    ]
 class ProductVariationAttributeInline(NestedTabularInline):
     model = ProductVariation.specifications.through
 
@@ -62,7 +75,10 @@ class ProductVariationInline(NestedStackedInline):#admin.StackedInline
     exclude = ('specifications',)
     inlines = [
         # ProductGalleryImageInline,
+        ProductGalleryImageInline,
+
         ProductVariationAttributeInline,
+        ProductChoicesInlineAdmin
     ]
 
 class ProductAdmin(NestedModelAdmin):
@@ -70,7 +86,6 @@ class ProductAdmin(NestedModelAdmin):
     list_display = ['title']
     search_fields = ['title'] # "menuitem__title","menuitem__category__title" if you want to search on menuitem and category cuz it's FK
     inlines = [
-        ProductGalleryImageInline,
         ProductVariationInline,
     ]
 
@@ -130,8 +145,15 @@ class OccasionalDiscountAdmin(admin.ModelAdmin):
        # obj.save()
 
 
+class FrameColorAdmin(admin.ModelAdmin): 
+    list_display = ['color_name']
+    model = FrameColor
 
+class WalletAdmin(admin.ModelAdmin):
+    model = Wallet
 
+admin.site.register(FrameColor,FrameColorAdmin)
+admin.site.register(Wallet,WalletAdmin)
 
 admin.site.register(Shop,ShopAdmin)
 admin.site.register(Product,ProductAdmin)

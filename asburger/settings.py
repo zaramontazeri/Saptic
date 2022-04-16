@@ -28,7 +28,7 @@ SECRET_KEY = '=3=wmc78&b=+$=-le=so2_i29$&+2u)e=@4anm8#=dxrnm$sbv'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["46.4.203.185", 'localhost']
+ALLOWED_HOSTS = ["46.4.203.185", 'localhost',]
 
 
 # Application definition
@@ -36,12 +36,12 @@ ALLOWED_HOSTS = ["46.4.203.185", 'localhost']
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
+    'polymorphic',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'auth_rest_phone',
     'drf_yasg',
     'adminsortable2',  # link:https://django-admin-sortable2.readthedocs.io/en/latest/
     'rangefilter',  # link:https://github.com/silentsokolov/django-admin-rangefilter
@@ -49,20 +49,22 @@ INSTALLED_APPS = [
     'drf_multiple_model',
     # link: https://github.com/philipn/django-rest-framework-filters
     'rest_framework_filters',
-    'users',
     'ckeditor',
     'ckeditor_uploader',  # link:https://django-ckeditor.readthedocs.io/en/latest/
     'embed_video',  # link:https://django-embed-video.readthedocs.io/en/latest/installation.html
     # 'django.contrib.sites',
     'nested_inline',
-
+    'django_extensions',
+    'corsheaders',
+    'easy_thumbnails',
+    'auth_rest_phone',
     'blog',
     'pages',
     'catalog',
     'shop',
-    'corsheaders',
     'domains',
-    'django_extensions'
+    'media_app',
+    'users_info',
 ]
 
 MIDDLEWARE = [
@@ -157,7 +159,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.BasicAuthentication',
-    ]
+    ],
+    'EXCEPTION_HANDLER': 'asburger.errors.exception_handler'
+
 }
 
 AUTH_USER_MODEL = 'auth_rest_phone.UserProfile'

@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from media_app.serializers import FileRelatedField
 
 
 from pages.models import FAQ, Page, ContactMessage, Subscription, CompanyInfo,PageContent
@@ -50,10 +51,11 @@ class CompanyInfoSerializer(serializers.ModelSerializer):
 
 
 class PageContentSerializer(serializers.ModelSerializer):
-
+    cover = FileRelatedField()
     class Meta:
         model = PageContent
         fields = (
+            'id',
             'slug', 
             'page_name', 
             'created', 

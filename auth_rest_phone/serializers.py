@@ -57,7 +57,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = tuple(User.REQUIRED_FIELDS) + (
             settings.USER_ID_FIELD,
-            settings.LOGIN_FIELD, "email", "first_name", "last_name", "avatar"
+            settings.LOGIN_FIELD, "email", "first_name", "last_name", "avatar","id"
         )
         read_only_fields = (settings.LOGIN_FIELD,)
 
@@ -126,6 +126,10 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return user
 
 
+
+
+
+
 class UserCreatePasswordRetypeSerializer(UserCreateSerializer):
     default_error_messages = {
         "password_mismatch": settings.CONSTANTS.messages.PASSWORD_MISMATCH_ERROR
@@ -145,6 +149,13 @@ class UserCreatePasswordRetypeSerializer(UserCreateSerializer):
             return attrs
         else:
             self.fail("password_mismatch")
+
+class AdminUserCreateSerializer(UserCreatePasswordRetypeSerializer):
+    def perform_create(self, validated_data):
+        with transaction.atomic():
+            user = User.objects.create_user(**validated_data)
+            user.is_active =True
+        return user
 
 
 class TokenCreateSerializer(serializers.Serializer):

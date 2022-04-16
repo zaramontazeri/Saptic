@@ -1,6 +1,8 @@
+from re import A
 import sys
 
 from decimal import Decimal
+from django.core import validators
 from django.shortcuts import render
 # from requests import Response
 from rest_framework.response import Response
@@ -9,13 +11,13 @@ from rest_framework import viewsets, permissions, status
 # Create your views here.
 from rest_framework.views import APIView
 
-from shop.models import Shop, Product, OrderedItem, Invoice, DiscountCode, ProductVariation, \
-    PromotionalCode,Transactions,Category
+from shop.models import ChargeTransaction, Shop, Product, OrderedItem, Invoice, DiscountCode, ProductVariation, \
+    PromotionalCode, Subcategory,Transactions,Category, UserWallet, Wallet
 from shop.filterset import ProductListFilter, MyFilterBackend
 from shop.serializers import CategorySerializer, ProductListSerializer, ProductDetailSerializer, \
-    RelatedProductSerializer, DiscountCodeSerializer, PromotionalCodeSerializer,InvoiceSerializer,SubcategorySerializer
+    RelatedProductSerializer, DiscountCodeSerializer, PromotionalCodeSerializer,InvoiceSerializer,SubcategorySerializer, UserWalletSerializer
 from services.payment import *
-
+from django.views import View
 
 class CategoryListAPIView(ListAPIView): #just category (without sub category
     queryset = Category.objects.all()
@@ -39,8 +41,36 @@ class ProductsListAPIView(ListAPIView):
     filter_backends = [MyFilterBackend] #todo BIG TODO FiLTER WITH ERFAN
     filter_class = ProductListFilter
     def get_queryset(self):
+        query_params = self.request.query_params
+        query_key_exclude = ['max_price', 'min_price', 'category', 'subcategory', 'test_in_place', 'attribute', 'attribute_value', 'ordering', 'color']
+
+        query_keys = list(query_params.keys() - query_key_exclude)
+        print (query_params)
         queryset=Product.objects.all()
+        for i in query_keys:
+            query_list = query_params[i].split("~")
+            print(i,query_list)
+            queryset = queryset.filter(variations__specifications__attribute__slug = i , \
+                variations__specifications__slug__in=query_list)
         return queryset
+    def get_serializer_context(self):
+        context =  super().get_serializer_context()
+        color = self.request.query_params.get("color",None)
+        if color:
+            context["colors"] = color.split("~")
+        return context
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        queryset = queryset.distinct()
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class SubcategoryListAPIView(ListAPIView): #show all of subcategories of a category
     serializer_class = SubcategorySerializer
@@ -58,11 +88,9 @@ class SubcategoryListAPIView(ListAPIView): #show all of subcategories of a categ
 
 
 class ProductDetailView(RetrieveAPIView): #send with all Variations
-    #todo product -hatman related products ham ezafe kon -
-    #todo  variation with all information and specifications -
     queryset = Product.objects.all() #filter(product_reviews__confirmed=True)
     serializer_class =ProductDetailSerializer
-
+    lookup_field="slug"
 
 # class OrderedItemViewSet(viewsets.ModelViewSet):
 #     """ViewSet for the OrderItem class"""
@@ -190,15 +218,100 @@ class DiscountCheck(APIView):
                     return  Response({"error_code":"4041","error":"discount  not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
+class UserWalletDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def get(self,request,wallet_id):
+        data={}
+        data["user"] = request.user
+        data['wallet'] = wallet_id
+        serializer = UserWalletSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()    
+        return Response(serializer.data)
+
+class UserWalletsInfoList(ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def get_queryset(self):
+        qs = UserWallet.objects.filter(user =self.request.user)
+        return qs  
+    def get_serializer_class(self):
+        wallets = Wallet.objects.all()
+        
+        for wallet in wallets :
+            data = {"user":self.request.user.id,"wallet":wallet.id}
+            serializer = UserWalletSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()   
+        self.serializer_class = UserWalletSerializer
+        return super().get_serializer_class()     
+
+class WalletCharge(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def post(self,request,wallet_id):
+        request_data ={}
+        request_data["amount"] = request.data['value']
+        # request_data["description"] = invoice_ser.data.get('description'," تست ")
+        request_data["description"] = "تست"
+        value = request.data.get('value')
+        data= {}
+        data["user"] = request.user
+        data['wallet'] = wallet_id
+        serializer = UserWalletSerializer(data=data)
+        instance = None
+        if serializer.is_valid():
+            instance = serializer.save()   
+        status,url, authority= send_request(request ,request_data)
+        if status == "success":
+            ChargeTransaction.objects.create(wallet_charge=instance,
+                                        status="pending",statusNum=0,authority=authority,value=value)
+            return Response({"url":url,"status":status})
+        elif status == "failed":
+            return Response({"status":status})
 
 
+class VerifyCharge(View):
+    def get(self, request):
+        authority = request.GET['Authority']
+        transaction = ChargeTransaction.objects.get(authority=authority)
+        value = transaction.value
+        status , refes = verify(request,float(value))
+        if status == "success":
+            transaction.status="payed"
+            transaction.refId = refes
+            transaction.save()
+            wch = transaction.wallet_charge
+            wch.value = wch.value+value
+            wch.save()
+            return render(request, status + '.html',
+                          {
+
+                          })
+            
+        elif status == "failed":
+            transaction.status="failed"
+            transaction.statusNum = refes
+            transaction.save()
+            return render(request, status + '.html',
+                          {
+
+                          })
+        elif status == "cancel":
+            transaction.status = "cancel"
+            transaction.statusNum = refes
+            transaction.save()
+            return render(request, status + '.html',
+                          {
+
+                          })
 class InvoiceView(ListCreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class=InvoiceSerializer
     def get_queryset(self):
         return Invoice.objects.filter(customer =self.request.user)
     def create(self, request, *args, **kwargs):
         # basket = request.DATA["POST"].get('basket') It's how django itself works
         code = request.data.get("code", None) #IMP: yek nafar nmitoone ham discount code estefade kone ham promotional code
+        user = request.user
         context = {
             "request": request,
             "discount" : None,
@@ -217,15 +330,17 @@ class InvoiceView(ListCreateAPIView):
                     # return  Response({"error_code":"4041","error":"discount  not found"}, status=status.HTTP_404_NOT_FOUND)
                     pass
         invoice_ser = InvoiceSerializer(data=request.data ,context=context)
-        invoice_ser.is_valid()
-        invoice = invoice_ser.save()
+        if invoice_ser.is_valid():
+            invoice = invoice_ser.save()
+        else :
+            return Response(invoice_ser.errors)
         request_data ={}
         request_data["amount"] = invoice_ser.data['total_price']
         # request_data["description"] = invoice_ser.data.get('description'," تست ")
         request_data["description"] = "تست"
         status,url, authority= send_request(request ,request_data)
         if status == "success":
-            Transaction.objects.create(invoice=invoice,
+            Transactions.objects.create(invoice=invoice,
                                         status="pending",statusNum=0,authority=authority)
             return Response({"url":url,"status":status})
         elif status == "failed":
@@ -265,43 +380,14 @@ class TestInPlaceView(ListCreateAPIView):
         request_data["description"] = "تست"
         status,url, authority= send_request(request ,request_data)
         if status == "success":
-            Transaction.objects.create(invoice=invoice,
+            Transactions.objects.create(invoice=invoice,
                                         status="pending",statusNum=0,authority=authority)
             return Response({"url":url,"status":status})
         elif status == "failed":
             return Response({"status":status})
 
-# class Verify(View):
-#     def get(self, request):
-#         authority = request.GET['Authority']
-#         transaction = Transactions.objects.get(authority=authority)
-#         amount = transaction.invoice.total_price
-#         status , refes = verify(request,amount)
-#         if status == "success":
-#             transaction.status="payed"
-#             transaction.refId = refes
-#             transaction.status = 0
-#             transaction.save()
-#             return render(request, status + '.html',
-#                           {
 
-#                           })
-#         elif status == "failed":
-#             transaction.status="failed"
-#             transaction.statusNum = refes
-#             transaction.save()
-#             return render(request, status + '.html',
-#                           {
 
-#                           })
-#         elif status == "cancel":
-#             transaction.status = "cancel"
-#             transaction.statusNum = refes
-#             transaction.save()
-#             return render(request, status + '.html',
-#                           {
-
-#                           })
 
 
 #

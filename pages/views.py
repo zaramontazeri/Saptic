@@ -103,16 +103,16 @@ class PageContentView(APIView):
     def get_queryset(self):
         try:
             print(self.kwargs["page_name"])
-            return PageContent.objects.filter(page_name=self.kwargs["page_name"],section= self.kwargs["section"])
+            return PageContent.objects.filter(page_name=self.kwargs["page_name"])
         except:
             raise NotFound(detail="content not found", code=4041)
-    def get(self, request,page_name , section, format=None):
+    def get(self, request,page_name , format=None):
         """
         Return a content.
         """
         query = self.get_queryset()
         print(query)
-        serializer = self.serializer_class(query,many=True)
+        serializer = self.serializer_class(query,many=True,context={"request":request})
         # serializer.is_valid()
         return Response(serializer.data)
     # queryset = models.PageContent.objects.all()
